@@ -1,2 +1,2 @@
-# labCode
-Code for the Lab
+# Solar Simulator CU Boulder McGehee lab
+Python code for the Lab solar simulator
