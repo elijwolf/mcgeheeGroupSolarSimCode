@@ -31,7 +31,7 @@ class Main(QtWidgets.QMainWindow):
         self.JVgraph.set_ylabel('Current density (mA/cm'+'\xb2'+')')
         self.JVgraph.axhline(y=0, color='k')
         self.JVgraph.axvline(x=0, color='k')
-        self.addmplJV(fig1)
+        self.addmpl(fig1,self.ui.gridLayout_MPLwidgetJV, self.ui.MPLwidgetJV)
         
         fig2 = Figure()
         self.MPPTgraph_JV = fig2.add_subplot(221)
@@ -46,9 +46,20 @@ class Main(QtWidgets.QMainWindow):
         self.MPPTgraph_TP = fig2.add_subplot(224)
         self.MPPTgraph_TP.set_xlabel('Time (s)')
         self.MPPTgraph_TP.set_ylabel('Power (W/m'+'\xb2'+')')
-        self.addmplMPPT(fig2)
+        self.addmpl(fig2, self.ui.gridLayout_MPLwidgetMPPT,self.ui.MPLwidgetMPPT)
         
-        for item0 in [self.JVgraph,self.MPPTgraph_JV,self.MPPTgraph_TV,self.MPPTgraph_TJ,self.MPPTgraph_TP]:
+        fig3 = Figure()
+        self.DIVgraphlin = fig3.add_subplot(121)
+        self.DIVgraphlin.set_xlabel('Voltage (mV)')
+        self.DIVgraphlin.set_ylabel('Current density (mA/cm'+'\xb2'+')')
+        self.DIVgraphlogY = fig3.add_subplot(122)
+        self.DIVgraphlogY.set_yscale('log')
+        self.DIVgraphlogY.set_xlabel('Voltage (mV)')
+        self.DIVgraphlogY.set_ylabel('Current density (mA/cm'+'\xb2'+')')
+        self.addmpl(fig3,self.ui.gridLayout_MPLwidgetDIV,self.ui.MPLwidgetDIV)
+
+        
+        for item0 in [self.DIVgraphlin,self.DIVgraphlogY,self.JVgraph,self.MPPTgraph_JV,self.MPPTgraph_TV,self.MPPTgraph_TJ,self.MPPTgraph_TP]:
             for item in ([item0.title, item0.xaxis.label, item0.yaxis.label] +
                          item0.get_xticklabels() + item0.get_yticklabels()):
                 item.set_fontsize(12)
@@ -56,22 +67,15 @@ class Main(QtWidgets.QMainWindow):
                 
         self.ui.actionLoad_settings.triggered.connect(lambda: LoadParamTemplate(self))
         self.ui.actionSave_settings.triggered.connect(lambda: SaveParamTemplate(self))
+    
+    def addmpl(self, fig, whereLayout, whereWidget):
+        self.canvas = FigureCanvas(fig)
+        whereLayout.addWidget(self.canvas)
+        self.canvas.draw()
+        self.toolbar = NavigationToolbar(self.canvas, 
+                whereWidget, coordinates=True)
+        whereLayout.addWidget(self.toolbar)
         
-    def addmplJV(self, fig):
-        self.canvas = FigureCanvas(fig)
-        self.ui.gridLayout_MPLwidgetJV.addWidget(self.canvas)
-        self.canvas.draw()
-        self.toolbar = NavigationToolbar(self.canvas, 
-                self.ui.MPLwidgetJV, coordinates=True)
-        self.ui.gridLayout_MPLwidgetJV.addWidget(self.toolbar)
-                
-    def addmplMPPT(self, fig):
-        self.canvas = FigureCanvas(fig)
-        self.ui.gridLayout_MPLwidgetMPPT.addWidget(self.canvas)
-        self.canvas.draw()
-        self.toolbar = NavigationToolbar(self.canvas, 
-                self.ui.MPLwidgetMPPT, coordinates=True)
-        self.ui.gridLayout_MPLwidgetMPPT.addWidget(self.toolbar)  
         
 
 if __name__ == "__main__":
