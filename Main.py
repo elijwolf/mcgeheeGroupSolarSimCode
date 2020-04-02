@@ -9,14 +9,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),'GUIf
 import matplotlib
 matplotlib.use("Qt5Agg")
 ######################################################################################################
-from PyQt5 import QtCore, QtWidgets, QtGui, uic
-from PyQt5.QtWidgets import QApplication
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QFileDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 ######################################################################################################
 
 from gui import Ui_MainWindow  #need to comment out all lines containing "PlaceholderText"
+from loadingsavingtemplate import LoadParamTemplate, SaveParamTemplate
 
 class Main(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -51,7 +52,10 @@ class Main(QtWidgets.QMainWindow):
             for item in ([item0.title, item0.xaxis.label, item0.yaxis.label] +
                          item0.get_xticklabels() + item0.get_yticklabels()):
                 item.set_fontsize(12)
-        
+                
+                
+        self.ui.actionLoad_settings.triggered.connect(lambda: LoadParamTemplate(self))
+        self.ui.actionSave_settings.triggered.connect(lambda: SaveParamTemplate(self))
         
     def addmplJV(self, fig):
         self.canvas = FigureCanvas(fig)
@@ -67,8 +71,8 @@ class Main(QtWidgets.QMainWindow):
         self.canvas.draw()
         self.toolbar = NavigationToolbar(self.canvas, 
                 self.ui.MPLwidgetMPPT, coordinates=True)
-        self.ui.gridLayout_MPLwidgetMPPT.addWidget(self.toolbar)        
-
+        self.ui.gridLayout_MPLwidgetMPPT.addWidget(self.toolbar)  
+        
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
