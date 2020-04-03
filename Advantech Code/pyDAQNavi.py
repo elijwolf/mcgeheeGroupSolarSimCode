@@ -20,7 +20,8 @@ class DeviceObject:
 
 		self.cDeviceInfo.Description = devDesc
 		self.cDeviceInfo.DeviceNumber = -1
-		self.cDeviceInfo.DeviceMode = bdaqctrl.ModeWriteWithReset
+		# self.cDeviceInfo.DeviceMode = bdaqctrl.ModeWrite #This leaves the relay in its original state when being initialized
+		self.cDeviceInfo.DeviceMode = bdaqctrl.ModeWriteWithReset #This sets the device to 0b00000000 when initialized
 		self.cDeviceInfo.ModuleIndex = 0
 
 		self.cret = bdaqctrl.InstantDoCtrl_setSelectedDevice(self.cDeviceStruct,self.cDeviceInfo)
@@ -28,6 +29,10 @@ class DeviceObject:
 		print ('Attempting device connect.')
 		print (devDesc)
 		errorCheck(self.cret)
+
+	def __del__(self):
+		writeDeviceState(self,0b00000000) #When about to shut down the device is set to 0b00000000.
+		disconnectDevice(self)
 
 def readDeviceState(deviceObject):
 	cstate = ffibuilder.new("uint8 *")
@@ -62,9 +67,15 @@ def errorCheck(cret):
 	return
 
 def disconnectDevice(deviceObject):
-	bdaqctrl.InstantDoCtrl_Dispose(deviceObject)
+	print ('')
+	print ('Attempting device disconnect.')
+	bdaqctrl.InstantDoCtrl_Dispose(deviceObject.cDeviceStruct)
+	print ('Success')
 
 if __name__ == "__main__":
+	# demoDevice1 = DeviceObject('USB-4761,BID#0')
+	# demoDevice1 = DeviceObject('USB-4761,BID#1')
+
 	demoDevice1 = DeviceObject('DemoDevice,BID#0')
 	demoDevice2 = DeviceObject('DemoDevice,BID#1')
 	readDeviceState(demoDevice1)
