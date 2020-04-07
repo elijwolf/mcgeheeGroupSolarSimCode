@@ -5,6 +5,7 @@ import numpy as np
 #####TO-DO#####
 '''
 - find out if you can use wait_for_srq or wai
+- determine Digital Output configuration required to open and close the shutter. The functions currently work, but the output configuration is a guess.
 '''
 ###############
 
@@ -82,6 +83,18 @@ def measureCurrent(keithleyObject, voltage=0, n=1):
 	data = rawDataArray
 	return data
 
+def openShutter(keithleyObject):
+	'''
+	Opens the Solar Sim shutter to allow light through and illuminate a device.
+	'''
+	keithleyObject.write('SOUR2:TTL {:d}'.format(0b1111))
+
+def closeShutter(keithleyObject):
+	'''
+	Closes the Solar Sim shutter to block light and prevent illumination of a device.
+	'''
+	keithleyObject.write('SOUR2:TTL {:d}'.format(0b0000))
+
 def takeIV(keithleyObject, startV=-0.2, stopV=1.2, stepV=0.1, delay=0.01, rev=0, NPLC = 1):
 	'''
 	This takes an IV sweep. startV must be less than stopV.
@@ -127,10 +140,15 @@ if __name__ == "__main__":
 	# print(rm.list_resources())
 
 	keithley = connectToKeithley('GPIB0::22::INSTR')
-	prepareVoltage(keithley)
-	dataVoltage = measureVoltage(keithley,current=0.001,n=10)
+	
+	openShutter(keithley)
+	closeShutter(keithley)
+
 	prepareCurrent(keithley, NPLC = 2)
 	dataCurrent = measureCurrent(keithley,voltage=0.001,n=10)
+
+	prepareVoltage(keithley)
+	dataVoltage = measureVoltage(keithley,current=0.001,n=10)
 
 	plt.figure('Voltage')
 	# print (dataVoltage.shape)
