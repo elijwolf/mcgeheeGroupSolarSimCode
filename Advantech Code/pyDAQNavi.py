@@ -2,18 +2,45 @@
 
 from cffi import FFI
 import sys
+import os
+
+def findbdaqPath(path):
+	'''
+	This function is used so that python can find _bdaqctrl.h regardless of where the main script is run from.
+	The main script must be run from inside the labCode folder.
+	'''
+	path = os.path.abspath(path)
+	# print (path)
+	# print (os.path.basename(path))
+	# print ()
+	if os.path.basename(path) == 'labCode':
+		# print ('Done')
+		return os.path.join(path,'Advantech Code','_bdaqctrl.h')
+	else:
+		path = findbdaqPath(os.path.normpath(os.path.join(path,'..')))
+		return path
+
+correctPath = findbdaqPath(__file__)
 
 # C Magic
 ffibuilder = FFI()
 
-with open("_bdaqctrl.h") as fin:
+# Import the modified C header file into cffi.
+with open(correctPath) as fin:
 	ffibuilder.cdef(fin.read())
 
+# Import the DAQNavi library into cffi.
 bdaqctrl = ffibuilder.dlopen("biodaq.dll")
 
 # Python Functions and Classes for Interaction
 class DeviceObject:
+	'''
+	This object represents a single Advantech box.
+	'''
 	def __init__(self, devDesc):
+		'''
+		This code runs when the object is created. 
+		'''
 		self.cDeviceStruct = bdaqctrl.AdxInstantDoCtrlCreate()
 		self.cDeviceInfo = ffibuilder.new("DeviceInformation *")
 		self.deviceDescription = devDesc
@@ -31,10 +58,16 @@ class DeviceObject:
 		errorCheck(self.cret)
 
 	def __del__(self):
+		'''
+		This code runs when the Advantech box object is about to be deleted.
+		'''
 		writeDeviceState(self,0b00000000) #When about to shut down the device is set to 0b00000000.
 		disconnectDevice(self)
 
 def readDeviceState(deviceObject):
+	'''
+	This function reads the current relay configuration of deviceObject.
+	'''
 	cstate = ffibuilder.new("uint8 *")
 	cret = bdaqctrl.InstantDoCtrl_ReadAny(deviceObject.cDeviceStruct,0,1,cstate)
 	print ()
@@ -46,6 +79,9 @@ def readDeviceState(deviceObject):
 	return state
 
 def writeDeviceState(deviceObject,state):
+	'''
+	This function writes a relay configuration of state to deviceObject.
+	'''
 	cstate = ffibuilder.new("uint8 *", state)
 	cret = bdaqctrl.InstantDoCtrl_WriteAny(deviceObject.cDeviceStruct,0,1,cstate)
 	print ()
@@ -57,6 +93,9 @@ def writeDeviceState(deviceObject,state):
 	return
 
 def errorCheck(cret):
+	'''
+	This function checks the errorCode type returned when calling various functions in the DAQNavi library.
+	'''
 	try:
 		assert bdaqctrl.Success == cret
 		print ('Success!')
@@ -67,6 +106,9 @@ def errorCheck(cret):
 	return
 
 def disconnectDevice(deviceObject):
+	'''
+	This function releases the deviceObject from memory.
+	'''
 	print ('')
 	print ('Attempting device disconnect.')
 	bdaqctrl.InstantDoCtrl_Dispose(deviceObject.cDeviceStruct)
@@ -77,10 +119,10 @@ if __name__ == "__main__":
 	# demoDevice1 = DeviceObject('USB-4761,BID#1')
 
 	demoDevice1 = DeviceObject('DemoDevice,BID#0')
-	demoDevice2 = DeviceObject('DemoDevice,BID#1')
+	# demoDevice2 = DeviceObject('DemoDevice,BID#1')
 	readDeviceState(demoDevice1)
-	readDeviceState(demoDevice2)
+	# readDeviceState(demoDevice2)
 	writeDeviceState(demoDevice1,0b11110000)
-	writeDeviceState(demoDevice2,0b00001111)
-	readDeviceState(demoDevice1)
-	readDeviceState(demoDevice2)
+	# writeDeviceState(demoDevice2,0b00001111)
+	# readDeviceState(demoDevice1)
+	# readDeviceState(demoDevice2)
