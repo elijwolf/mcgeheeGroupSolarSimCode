@@ -29,7 +29,7 @@ labCodePath = findLabCodePath(__file__)
 sys.path.insert(0, os.path.join(labCodePath,'Advantech Code'))
 import pyDAQNavi as pDN
 
-pixelName='all'
+
 							 
 def connectPixel(box1, box2, pixelName):
 	'''
@@ -57,9 +57,9 @@ def connectPixel(box1, box2, pixelName):
    # print connectPixel (pixelName) 
 	
 if __name__ == "__main__":
-	# boxCurrent = pDN.DeviceObject('USB-4761,BID#0')
-	# boxVoltage = pDN.DeviceObject('USB-4761,BID#1')
-	boxCurrent = pDN.DeviceObject('DemoDevice,BID#0')
-	boxVoltage = pDN.DeviceObject('DemoDevice,BID#1')
+	boxCurrent = pDN.DeviceObject('USB-4761,BID#0')
+	boxVoltage = pDN.DeviceObject('USB-4761,BID#1')
+	#boxCurrent = pDN.DeviceObject('DemoDevice,BID#0')
+	#boxVoltage = pDN.DeviceObject('DemoDevice,BID#1')
 	#pDN.writeDeviceState(boxCurrent, 0b00000001)
-	connectPixel(boxCurrent, boxVoltage, 'a')
+	connectPixel(boxCurrent, boxVoltage, 'off')
