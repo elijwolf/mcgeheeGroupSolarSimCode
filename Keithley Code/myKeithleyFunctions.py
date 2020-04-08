@@ -20,6 +20,8 @@ def connectToKeithley(keithleyAddress='GPIB0::22::INSTR'):
 		import datetime
 		global time
 		import time
+		global sleepTime
+		sleepTime = 0.001
 		global start
 		start = datetime.datetime.now()
 		global k
@@ -81,13 +83,13 @@ def measureVoltage(keithleyObject, current=0, n=1):
 	Sets the current and measures voltage n times.
 	'''
 	if keithleyObject == 'Test':
-		time.sleep(0.01)
+		time.sleep(sleepTime)
 		timeStamp = (datetime.datetime.now()-start).total_seconds()
 		simVolt = getV(current,Iph)
 		rawData = np.array([simVolt,current,9.91e+37, timeStamp, 0b00000000])
 		rawDataArray = np.array(rawData)
 		for i in range(n-1):
-			time.sleep(0.01)
+			time.sleep(sleepTime)
 			timeStamp = (datetime.datetime.now()-start).total_seconds()
 			simVolt = getV(current,Iph)
 			rawData = np.array([simVolt,current,9.91e+37, timeStamp, 0b00000000])
@@ -124,13 +126,13 @@ def measureCurrent(keithleyObject, voltage=0, n=1):
 	Sets the voltage and measures current n times.
 	'''
 	if keithleyObject == 'Test':
-		time.sleep(0.01)
+		time.sleep(sleepTime)
 		timeStamp = (datetime.datetime.now()-start).total_seconds()
 		simCurrent = getI(voltage,Iph)
 		rawData = np.array([voltage,simCurrent,9.91e+37, timeStamp, 0b00000000])
 		rawDataArray = np.array(rawData)
 		for i in range(n-1):
-			time.sleep(0.01)
+			time.sleep(sleepTime)
 			timeStamp = (datetime.datetime.now()-start).total_seconds()
 			simCurrent = getI(voltage,Iph)
 			rawData = np.array([voltage,simCurrent,9.91e+37, timeStamp, 0b00000000])
@@ -182,13 +184,14 @@ def takeIV(keithleyObject, startV=-0.2, stopV=1.2, stepV=0.1, delay=0.01, rev=0,
 
 	if keithleyObject == 'Test':
 		volts = np.arange(startV, stopV+stepV, stepV)
-		time.sleep(0.01)
+		global start
+		start = datetime.datetime.now()
 		timeStamp = (datetime.datetime.now()-start).total_seconds()
 		simCurrent = getI(volts[0],Iph)
 		rawData = np.array([volts[0],simCurrent,9.91e+37, timeStamp, 0b00000000])
 		rawDataArray = np.array(rawData)
 		for volt in volts[1:]:
-			time.sleep(0.01)
+			time.sleep(sleepTime)
 			timeStamp = (datetime.datetime.now()-start).total_seconds()
 			simCurrent = getI(volt,Iph)
 			rawData = np.array([volt,simCurrent,9.91e+37, timeStamp, 0b00000000])
