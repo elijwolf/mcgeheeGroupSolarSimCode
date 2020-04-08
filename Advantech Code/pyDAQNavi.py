@@ -22,13 +22,13 @@ def findLabCodePath(myPath):
 
 labCodePath = findLabCodePath(__file__)
 
-correctPath = os.path.join(labCodePath,'Advantech Code','_bdaqctrl.h')
+bdaqctrlPath = os.path.join(labCodePath,'Advantech Code','_bdaqctrl.h')
 
 # C Magic
 ffibuilder = FFI()
 
 # Import the modified C header file into cffi.
-with open(correctPath) as fin:
+with open(bdaqctrlPath) as fin:
 	ffibuilder.cdef(fin.read())
 
 # Import the DAQNavi library into cffi.
