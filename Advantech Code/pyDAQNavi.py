@@ -4,23 +4,25 @@ from cffi import FFI
 import sys
 import os
 
-def findbdaqPath(path):
+def findLabCodePath(myPath):
 	'''
-	This function is used so that python can find _bdaqctrl.h regardless of where the main script is run from.
-	The main script must be run from inside the labCode folder.
+	This function is used so that python can find important modules regardless of where the main script is run from.
+	The main script must be run from anywhere inside the labCode folder.
 	'''
-	path = os.path.abspath(path)
+	myPath = os.path.abspath(myPath)
 	# print (path)
 	# print (os.path.basename(path))
 	# print ()
-	if os.path.basename(path) == 'labCode':
+	if os.path.basename(myPath) == 'labCode':
 		# print ('Done')
-		return os.path.join(path,'Advantech Code','_bdaqctrl.h')
+		return myPath
 	else:
-		path = findbdaqPath(os.path.normpath(os.path.join(path,'..')))
-		return path
+		myPath = findLabCodePath(os.path.normpath(os.path.join(myPath,'..')))
+		return myPath
 
-correctPath = findbdaqPath(__file__)
+labCodePath = findLabCodePath(__file__)
+
+correctPath = os.path.join(labCodePath,'Advantech Code','_bdaqctrl.h')
 
 # C Magic
 ffibuilder = FFI()
