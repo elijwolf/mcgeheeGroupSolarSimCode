@@ -66,6 +66,29 @@ need to check all units in all function measuring data from keithley
 sequence builder: so user can define himself the sequence of dark, light, mpp... same as done for Jay
 
 
+
+
+
+change text of open/close button according to actual state
+change text of start voltage to start current according to what is selected in drop down menu
+
+when diode measured, and user reclick assume 1sun, it still takes measured sun#
+
+add column date/time in Table, as last column
+
+all button to be thought again!
+
+weird empty lines in table
+
+make the light on? check live in tracking
+
+autosize column width in table
+
+make resizable the first window
+
+check load/save functions
+
+add preparevoltage to refdiode measure
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
