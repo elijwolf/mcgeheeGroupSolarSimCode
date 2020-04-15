@@ -1257,7 +1257,7 @@ class Window(QtWidgets.QMainWindow):
         self.pushButton_Reality.clicked.connect(self.MainReal)   
         self.pushButton_Simul.clicked.connect(self.MainSimul)
 
-        self.setFixedSize(430, 70)
+        self.setFixedSize(450, 100)
         self.setWindowTitle("Will you choose the Red or the Blue pill?")
         self.show()
 
