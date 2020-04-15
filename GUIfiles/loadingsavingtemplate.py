@@ -1,39 +1,39 @@
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5 import QtCore
-
+import os
+from pathlib import Path
 
 def LoadParamTemplate(self):
     '''
     ask user to select a template file to fill everything with presaved parameters
     '''      
+    directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'ExamplesTemplateFiles')
     
-    fname = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\',"Text files (*.txt)")
+    fname = QFileDialog.getOpenFileName(self, 'Choose a template file to load', directory,"Text files (*.txt)")
+    
+    
     with open(fname[0],'r') as file:
         for line in file:
             if 'UserName' in line:
-                self.ui.lineEdit_UserName.setText(line.split('\t')[1])
+                self.ui.lineEdit_UserName.setText(line.split('\t')[1][:-1])
             elif 'SampleName' in line:
-                self.ui.lineEdit_SampleName.setText(line.split('\t')[1])
+                self.ui.lineEdit_SampleName.setText(line.split('\t')[1][:-1])
             elif 'Comment' in line:
-                self.ui.lineEdit_Comment.setText(line.split('\t')[1])
+                self.ui.lineEdit_Comment.setText(line.split('\t')[1][:-1])
             elif 'Meas. type' in line:
                 index = self.ui.comboBox_MeasType.findText(line.split('\t')[1][:-1], QtCore.Qt.MatchFixedString)
                 if index >= 0:
                      self.ui.comboBox_MeasType.setCurrentIndex(index)
-            elif 'WhichPixel' in line:
-                index = self.ui.comboBox_WhichPixel.findText(line.split('\t')[1][:-1], QtCore.Qt.MatchFixedString)
-                if index >= 0:
-                     self.ui.comboBox_WhichPixel.setCurrentIndex(index)
             elif '#rep' in line:
                 self.ui.spinBox_RepNumb.setValue(float(line.split('\t')[1]))
             elif 'DelayRep' in line:
                 self.ui.spinBox_RepDelay.setValue(float(line.split('\t')[1]))
             elif 'Diode1sun' in line:
-                self.ui.doubleSpinBox_Diode1sunVoltage.setValue(float(line.split('\t')[1]))
-            elif 'mismatchfactor' in line:
-                self.ui.doubleSpinBox_MismatchFactor.setValue(float(line.split('\t')[1]))
+                self.ui.doubleSpinBox_DiodeNominalCurrent.setValue(float(line.split('\t')[1]))
             elif 'temperature' in line:
                 self.ui.doubleSpinBox_Temperature.setValue(float(line.split('\t')[1]))
+            elif 'assume1sun' in line:
+                self.ui.radioButton_Assume1sun.setChecked(eval(line.split('\t')[1]))
             elif 'minvoltage' in line:
                 self.ui.doubleSpinBox_JVminvoltage.setValue(float(line.split('\t')[1]))
             elif 'maxvoltage' in line:
@@ -132,6 +132,10 @@ def SaveParamTemplate(self):
         radioButton_pixAll='True'
     else:
         radioButton_pixAll='False'
+    if self.ui.radioButton_Assume1sun.isChecked():
+        radioButton_Assume1sun='True'
+    else:
+        radioButton_Assume1sun='False'
     
     fname = QFileDialog.getSaveFileName(self, 'Save file', 'c:\\',"Text files (*.txt)")
     with open(fname[0],'w') as file:
@@ -139,13 +143,12 @@ def SaveParamTemplate(self):
             'SampleName\t'+ str(self.ui.lineEdit_SampleName.text())+\
             'Comment\t'+str(self.ui.lineEdit_Comment.text())+\
             'Meas. type\t'+ str(self.ui.comboBox_MeasType.currentText())+'\n'+\
-            'WhichPixel\t'+ str(self.ui.comboBox_WhichPixel.currentText())+'\n'+\
             '#rep\t'+ str(self.ui.spinBox_RepNumb.value())+'\n'+\
             'DelayRep\t'+ str(self.ui.spinBox_RepDelay.value())+'\n'+\
             '\n'+\
-            'Diode1sun\t'+ str(self.ui.doubleSpinBox_Diode1sunVoltage.value())+'\n'+\
-            'mismatchfactor\t'+ str(self.ui.doubleSpinBox_MismatchFactor.value())+'\n'+\
+            'Diode1sun\t'+ str(self.ui.doubleSpinBox_DiodeNominalCurrent.value())+'\n'+\
             'temperature\t'+ str(self.ui.doubleSpinBox_Temperature.value())+'\n'+\
+            'assume1sun\t'+ radioButton_Assume1sun +'\n'+\
             '\n'+\
             'minvoltage\t'+ str(self.ui.doubleSpinBox_JVminvoltage.value())+'\n'+\
             'maxvoltage\t'+ str(self.ui.doubleSpinBox_JVmaxvoltage.value())+'\n'+\

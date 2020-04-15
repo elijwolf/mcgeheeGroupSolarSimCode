@@ -1,0 +1,41 @@
+UserName	jwerner
+SampleName	100_01
+Comment	_aftermpp
+Meas. type	LIV
+WhichPixel	All
+#rep	1
+DelayRep	10
+
+Diode1sun	0.0014
+temperature	25
+assume1sun	True
+
+minvoltage	-200
+maxvoltage	1200
+JVstepsize	20
+currentlimit	0.1
+integtime	50
+delaypoints	50
+delayshutter	100
+scandirection	Reverse + forward
+
+startvoltage	500
+MPPTstepsize	5
+voltagelimit	2000
+delaypointsmpp	50
+lighton	True
+keeplightafter	True
+
+PixelA	True
+PixelB	True
+PixelC	True
+PixelD	True
+PixelE	True
+PixelF	True
+A-area	0.06
+B-area	0.06
+C-area	0.06
+D-area	0.06
+E-area	0.06
+F-area	0.06
+Allpix	True

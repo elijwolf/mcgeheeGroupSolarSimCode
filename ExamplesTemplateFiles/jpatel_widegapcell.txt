@@ -1,4 +1,4 @@
-UserName	jwerner
+UserName	jpatel
 SampleName	100_01
 Comment	_aftermpp
 Meas. type	LIV
@@ -6,14 +6,14 @@ WhichPixel	All
 #rep	1
 DelayRep	10
 
-Diode1sun	0
-mismatchfactor	1
+Diode1sun	0.0014
 temperature	25
+assume1sun	True
 
 minvoltage	-200
 maxvoltage	1200
 JVstepsize	20
-currentlimit	100
+currentlimit	0.1
 integtime	50
 delaypoints	50
 delayshutter	100

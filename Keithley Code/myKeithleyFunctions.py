@@ -1,6 +1,7 @@
 import pyvisa
 import sys
 import numpy as np
+from PyQt5 import QtTest
 
 #####TO-DO#####
 '''
@@ -25,18 +26,22 @@ def connectToKeithley(keithleyAddress='GPIB0::22::INSTR'):
 		global start
 		start = datetime.datetime.now()
 		global k
-		k = 8.617e-5
+# 		k = 8.617e-5
+		k = 1.38e-23        
 		global T0
 		T0 = 273.15
 		global Iph
 		Iph = 0
+		global q
+		q = 1.602e-19   
 
-		def testIV(V,Iph,I0=1e-9,T=25,VF=1.2,VR=1,V0=0.56):
-			I = -Iph + I0*(np.exp((V-VF+V0)/(k*(T+T0)))-1) + 0.01*np.random.uniform(-1,1)
+		def testIV(V,Iph,I0=1e-13,T=25,VF=1.1,VR=1,V0=0.56):
+# 			I = -Iph + I0*(np.exp((V-VF+V0)/(k*(T+T0)))-1) + 0.01*np.random.uniform(-1,1)
+			I = -Iph + I0*(np.exp(q*(V-VF+V0)/(k*(T+T0)))-1) + 0.001*np.random.uniform(-0.0005,0.0005)
 			return I
 
-		def testIVinv(I,Iph,I0=1e-9,T=25,VF=1.2,VR=1,V0=0.56):
-			V = k*(T+T0)*np.log(1+((I+Iph)/I0)) + 0.001*np.random.uniform(-1,1)
+		def testIVinv(I,Iph,I0=1e-13,T=25,VF=1.1,VR=1,V0=0.56):
+			V = k*(T+T0)*np.log(1+((I+Iph)/I0))/q + 0.001*np.random.uniform(-1,1)
 			return V
 
 		global getI
@@ -149,14 +154,15 @@ def measureCurrent(keithleyObject, voltage=0, n=1):
 	return data
 
 def openShutter(keithleyObject):
-	'''
-	Opens the Solar Sim shutter to allow light through and illuminate a device.
-	'''
-	if keithleyObject == 'Test':
-		global Iph
-		Iph = 20
-		return
-	keithleyObject.write('SOUR2:TTL {:d}'.format(0b1111))
+    '''
+    Opens the Solar Sim shutter to allow light through and illuminate a device.
+    '''
+    if keithleyObject == 'Test':
+        global Iph
+        Iph = 0.0012+np.random.uniform(-0.0005,0.0005)
+        # print('shutter open')
+        return
+    keithleyObject.write('SOUR2:TTL {:d}'.format(0b1111))
 
 def closeShutter(keithleyObject):
 	'''
@@ -165,10 +171,11 @@ def closeShutter(keithleyObject):
 	if keithleyObject == 'Test':
 		global Iph
 		Iph = 0
+# 		print('shutter closed')
 		return
 	keithleyObject.write('SOUR2:TTL {:d}'.format(0b0000))
 
-def takeIV(keithleyObject, startV=-0.2, stopV=1.2, stepV=0.1, delay=0.01, rev=0, NPLC = 1):
+def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=0.01, forw=1, NPLC = 1, Ilimit=100E-3):
 	'''
 	This takes an IV sweep. startV must be less than stopV.
 	Returns an (n,5) numpy array.
@@ -178,9 +185,11 @@ def takeIV(keithleyObject, startV=-0.2, stopV=1.2, stepV=0.1, delay=0.01, rev=0,
 	See Keithley manual for the explanatoin of the value of status.
 	NPLC Range [0.01,10]
 	'''
-	if rev != 0:
-		startV, stopV = stopV, startV
+	if not forw:
+		startV, stopV = maxV, minV
 		stepV *= -1
+	else:
+		startV, stopV = minV, maxV
 
 	if keithleyObject == 'Test':
 		volts = np.arange(startV, stopV+stepV, stepV)
@@ -191,7 +200,8 @@ def takeIV(keithleyObject, startV=-0.2, stopV=1.2, stepV=0.1, delay=0.01, rev=0,
 		rawData = np.array([volts[0],simCurrent,9.91e+37, timeStamp, 0b00000000])
 		rawDataArray = np.array(rawData)
 		for volt in volts[1:]:
-			time.sleep(sleepTime)
+# 			time.sleep(sleepTime)
+			QtTest.QTest.qWait(sleepTime)#qWait is better than sleep because it does not freeze the gui during waiting time
 			timeStamp = (datetime.datetime.now()-start).total_seconds()
 			simCurrent = getI(volt,Iph)
 			rawData = np.array([volt,simCurrent,9.91e+37, timeStamp, 0b00000000])
@@ -199,7 +209,7 @@ def takeIV(keithleyObject, startV=-0.2, stopV=1.2, stepV=0.1, delay=0.01, rev=0,
 		data = rawDataArray
 		return data
 
-	n = round(1 + (stopV - startV) / stepV)
+	n = round(1 + (stopV - startV) / abs(stepV))
 	keithleyObject.timeout = 100000
 	keithleyObject.write('SOUR:FUNC VOLT')
 	keithleyObject.write('SOUR:VOLT:STAR {:.3f}'.format(startV))
@@ -211,7 +221,7 @@ def takeIV(keithleyObject, startV=-0.2, stopV=1.2, stepV=0.1, delay=0.01, rev=0,
 	keithleyObject.write('SOUR:SWE:POIN {:d}'.format(n))
 	keithleyObject.write('SOUR:DEL {:.3f}'.format(delay))
 	keithleyObject.write('SENS:FUNC "CURR"')
-	keithleyObject.write('SENS:CURR:PROT 100E-3')
+	keithleyObject.write('SENS:CURR:PROT {:.3f}'.format(Ilimit))
 	keithleyObject.write('SENS:CURR:NPLC {:.3f}'.format(NPLC))
 	keithleyObject.write('TRIG:COUN {:d}'.format(n))
 	keithleyObject.write('SYST:TIME:RES')
@@ -227,55 +237,56 @@ def shutdownKeithley(keithleyObject):
 
 if __name__ == "__main__":
 
-	import matplotlib.pyplot as plt
+ 	import matplotlib.pyplot as plt
 
 	# rm = pyvisa.ResourceManager()
 	# print(rm.list_resources())
 
 	# keithley = connectToKeithley('GPIB0::22::INSTR')
-	keithley = connectToKeithley('Test')
+ 	keithley = connectToKeithley('Test')
 	
-	openShutter(keithley)
-	closeShutter(keithley)
+# 	openShutter(keithley)
+# 	closeShutter(keithley)
 
-	prepareCurrent(keithley, NPLC = 2)
-	dataCurrent = measureCurrent(keithley,voltage=0.001,n=10)
-	# print (type(dataCurrent))
-	# print (dataCurrent.shape)
-	# print (type(dataCurrent[0]))
-	# print (dataCurrent[0].shape)
-	# print (type(dataCurrent[0][0]))
-	# print (type(dataCurrent[0][1]))
-	# print (type(dataCurrent[0][2]))
-	# print (type(dataCurrent[0][3]))
-	# print (type(dataCurrent[0][4]))
+# 	prepareCurrent(keithley, NPLC = 2)
+# 	dataCurrent = measureCurrent(keithley,voltage=0.001,n=10)
+# 	# print (type(dataCurrent))
+# 	# print (dataCurrent.shape)
+# 	# print (type(dataCurrent[0]))
+# 	# print (dataCurrent[0].shape)
+# 	# print (type(dataCurrent[0][0]))
+# 	# print (type(dataCurrent[0][1]))
+# 	# print (type(dataCurrent[0][2]))
+# 	# print (type(dataCurrent[0][3]))
+# 	# print (type(dataCurrent[0][4]))
 
-	prepareVoltage(keithley)
-	dataVoltage = measureVoltage(keithley,current=0.001,n=9)
-	# print (type(dataVoltage))
-	# print (dataVoltage.shape)
-	# print (type(dataVoltage[0]))
-	# print (dataVoltage[0].shape)
-	# print (type(dataVoltage[0][0]))
-	# print (type(dataVoltage[0][1]))
-	# print (type(dataVoltage[0][2]))
-	# print (type(dataVoltage[0][3]))
-	# print (type(dataVoltage[0][4]))
+# 	prepareVoltage(keithley)
+# 	dataVoltage = measureVoltage(keithley,current=0.001,n=9)
+# 	# print (type(dataVoltage))
+# 	# print (dataVoltage.shape)
+# 	# print (type(dataVoltage[0]))
+# 	# print (dataVoltage[0].shape)
+# 	# print (type(dataVoltage[0][0]))
+# 	# print (type(dataVoltage[0][1]))
+# 	# print (type(dataVoltage[0][2]))
+# 	# print (type(dataVoltage[0][3]))
+# 	# print (type(dataVoltage[0][4]))
 
-	plt.figure('Voltage')
-	# print (dataVoltage.shape)
-	# print (dataVoltage.shape[0])
-	xs = np.arange(dataVoltage.shape[0])
-	plt.plot(xs,dataVoltage[:,0])
+# 	plt.figure('Voltage')
+# 	# print (dataVoltage.shape)
+# 	# print (dataVoltage.shape[0])
+# 	xs = np.arange(dataVoltage.shape[0])
+# 	plt.plot(xs,dataVoltage[:,0])
 
-	plt.figure('Current')
-	xs = np.arange(dataCurrent.shape[0])
-	plt.plot(xs,dataCurrent[:,1])
+# 	plt.figure('Current')
+# 	xs = np.arange(dataCurrent.shape[0])
+# 	plt.plot(xs,dataCurrent[:,1])
 
 
-	#This section of code tests the takeIV function and plots it.
-	openShutter(keithley)
-	data = takeIV(keithley, NPLC = 0.01)
+ 	#This section of code tests the takeIV function and plots it.
+ 	openShutter(keithley)
+ 	# data = takeIV(keithley, NPLC = 0.01)
+ 	data = takeIV(keithley,-0.2,1.2,0.02,0.01,0,1) 
 	# print (type(data))
 	# print (data.shape)
 	# print (type(data[0]))
@@ -285,34 +296,40 @@ if __name__ == "__main__":
 	# print (type(data[0][2]))
 	# print (type(data[0][3]))
 	# print (type(data[0][4]))
-	volt = data[:,0]
-	current = data[:,1]
+ 	volt = data[:,0]
+ 	current = data[:,1]
+ 	currentdensity=[x*1000/0.06 for x in current]
+     
 	# c = data[:,2]
 	# d = data[:,3]
 	# e = data[:,4]
-	data1 = takeIV(keithley, rev=1)
-	volt1 = data1[:,0]
-	current1 = data1[:,1]
+# 	data1 = takeIV(keithley, forw=1)
+# 	volt1 = data1[:,0]
+# 	current1 = data1[:,1]
 	# # c1 = data[:,2]
 	# # d1 = data[:,3]
 	# # e1 = data[:,4]
-	closeShutter(keithley)
-	dataDark = takeIV(keithley, rev=1)
-	voltDark = dataDark[:,0]
-	currentDark = dataDark[:,1]
+# 	closeShutter(keithley)
+# 	dataDark = takeIV(keithley, forw=0)
+# 	voltDark = dataDark[:,0]
+# 	currentDark = dataDark[:,1]
 	# # c1 = data[:,2]
 	# # d1 = data[:,3]
 	# # e1 = data[:,4]
-	plt.figure('Sweep')
-	# plt.plot(volt,volt, label = 'Volts')
-	plt.plot(volt,current, label = 'Jsc->Voc')
-	plt.plot(volt1,current1, label = 'Voc->Jsc')
+# 	dataDark = takeIV(keithley,-0.2,1.2,0.02,0.01,0,1) 
+# 	print(dataDark)
+# 	voltDark = dataDark[:,0]
+# 	currentDark = dataDark[:,1]
+# 	plt.figure('Sweep')
+ 	# plt.plot(volt,volt, label = 'Volts')
+ 	plt.plot(volt,currentdensity, label = 'Jsc->Voc')
+# 	plt.plot(volt1,current1, label = 'Voc->Jsc')
 	# plt.plot(volt,c, label = 'Resistance') #This is noramlly disabled and will result in all values equal to 9.91e+37
 	# plt.plot(volt,d, label = 'Time')
 	# plt.plot(volt,e, label = 'Status')
 
-	plt.plot(voltDark,currentDark, label = 'Dark')
+ 	# plt.plot(voltDark,currentDark, label = 'Dark')
 	
-	shutdownKeithley(keithley)
-	plt.legend()
-	plt.show()
+ 	shutdownKeithley(keithley)
+ 	plt.legend()
+ 	plt.show()

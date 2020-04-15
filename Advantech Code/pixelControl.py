@@ -39,12 +39,12 @@ def connectPixel(box1, box2, pixelName):
 	'''
 	switcher = {
 		'off':0b00000000,
-		'a': 0b00000001, 
-		'b': 0b00000010, 
-		'c': 0b00000100,
-		'd': 0b00001000, 
-		'e': 0b00010000, 
-		'f': 0b00100000,
+		'A': 0b00000001, 
+		'B': 0b00000010, 
+		'C': 0b00000100,
+		'D': 0b00001000, 
+		'E': 0b00010000, 
+		'F': 0b00100000,
 		# 'all':0b11111111,
 						} 
 	
@@ -57,9 +57,10 @@ def connectPixel(box1, box2, pixelName):
    # print connectPixel (pixelName) 
 	
 if __name__ == "__main__":
-	boxCurrent = pDN.DeviceObject('USB-4761,BID#0')
-	boxVoltage = pDN.DeviceObject('USB-4761,BID#1')
-	#boxCurrent = pDN.DeviceObject('DemoDevice,BID#0')
-	#boxVoltage = pDN.DeviceObject('DemoDevice,BID#1')
+    # print('')
+ 	boxCurrent = pDN.DeviceObject('USB-4761,BID#0')
+ 	boxVoltage = pDN.DeviceObject('USB-4761,BID#1')
+# 	boxCurrent = pDN.DeviceObject('DemoDevice,BID#0')
+# 	boxVoltage = pDN.DeviceObject('DemoDevice,BID#1')
 	#pDN.writeDeviceState(boxCurrent, 0b00000001)
-	connectPixel(boxCurrent, boxVoltage, 'off')
+ 	connectPixel(boxCurrent, boxVoltage, 'off')
