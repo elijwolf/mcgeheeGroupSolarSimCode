@@ -9,7 +9,7 @@ from PyQt5 import QtTest
 - determine Digital Output configuration required to open and close the shutter. The functions currently work, but the output configuration is a guess.
 '''
 ###############
-def connectToKeithley(keithleyAddress='GPIB0::22::INSTR'):
+def connectToKeithley(keithleyAddress='GPIB0::22::INSTR',rm=pyvisa.ResourceManager()):
 	'''
 	This creates a Keithley object with which to interact with.
 	Attempt to connect to a Keithley, then send an ID query to confirm connection. If this fails, send an error message to the terminal and terminate the program.
@@ -154,15 +154,15 @@ def measureCurrent(keithleyObject, voltage=0, n=1):
 	return data
 
 def openShutter(keithleyObject):
-    '''
-    Opens the Solar Sim shutter to allow light through and illuminate a device.
-    '''
-    if keithleyObject == 'Test':
-        global Iph
-        Iph = 0.0012+np.random.uniform(-0.0005,0.0005)
-        # print('shutter open')
-        return
-    keithleyObject.write('SOUR2:TTL {:d}'.format(0b1111))
+	'''
+	Opens the Solar Sim shutter to allow light through and illuminate a device.
+	'''
+	if keithleyObject == 'Test':
+		global Iph
+		Iph = 0.0012+np.random.uniform(-0.0005,0.0005)
+		# print('shutter open')
+		return
+	keithleyObject.write('SOUR2:TTL {:d}'.format(0b1111))
 
 def closeShutter(keithleyObject):
 	'''
@@ -209,7 +209,7 @@ def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=0.01, forw=1, N
 		data = rawDataArray
 		return data
 
-	n = round(1 + (stopV - startV) / abs(stepV))
+	n = round(1 + (stopV - startV) /stepV)
 	keithleyObject.timeout = 100000
 	keithleyObject.write('SOUR:FUNC VOLT')
 	keithleyObject.write('SOUR:VOLT:STAR {:.3f}'.format(startV))
@@ -230,10 +230,11 @@ def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=0.01, forw=1, N
 	data = np.reshape(rawData, (-1,5))
 	return data
 
-def shutdownKeithley(keithleyObject):
+def shutdownKeithley(keithleyObject,rm=pyvisa.ResourceManager()):
 	if keithleyObject == 'Test':
 		return
 	keithleyObject.write('OUTP OFF')
+	rm.close()
 
 if __name__ == "__main__":
 
@@ -331,5 +332,4 @@ if __name__ == "__main__":
  	# plt.plot(voltDark,currentDark, label = 'Dark')
 	
  	shutdownKeithley(keithley)
- 	plt.legend()
  	plt.show()

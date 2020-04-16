@@ -565,6 +565,7 @@ class Main(QtWidgets.QMainWindow):
 
         for item in range(len(pixels)):
             STOPMEASMPP=0
+            nMeas = 2
             timelist=[]
             currentlist=[]
             currentdensitylist=[]
@@ -594,7 +595,7 @@ class Main(QtWidgets.QMainWindow):
                     self.shutter('CloseShutter',keithleyObject)
                 
                 if trackingtype=='FixedVoltage':
-                    dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,5)
+                    dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
                     currentden=abs(mean(dataCurrent[:,1]))/pixarea
                     current=abs(mean(dataCurrent[:,1]))
                     currentlist.append(float(current))
@@ -606,7 +607,7 @@ class Main(QtWidgets.QMainWindow):
                     delaylist.append(delay)  
                     
                 elif trackingtype=='FixedCurrent':
-                    dataVoltage=measureVoltage(keithleyObject,voltagefixed/1000,5)
+                    dataVoltage=measureVoltage(keithleyObject,voltagefixed/1000,nMeas)
                     voltage=abs(mean(dataVoltage[:,1]))
                     currentlist.append(voltagefixed)
                     currentdensitylist.append(voltagefixed/pixarea)
@@ -621,7 +622,7 @@ class Main(QtWidgets.QMainWindow):
                         voltagefixed=sorted(lastmeasDATA.items(), key=lambda x: x[1]['Eff'],reverse=True)[0][1]['Vmpp']
                         # print(voltagefixed)
                         
-                    dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,5)
+                    dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
                     currentden=abs(mean(dataCurrent[:,1]))/pixarea
                     current=abs(mean(dataCurrent[:,1]))
                     
@@ -643,7 +644,7 @@ class Main(QtWidgets.QMainWindow):
                         else:
                             self.shutter('CloseShutter',keithleyObject)
                         
-                        dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,5)
+                        dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
                         currentden=abs(mean(dataCurrent[:,1]))/pixarea
                         current=abs(mean(dataCurrent[:,1]))
                         
@@ -773,7 +774,8 @@ class Main(QtWidgets.QMainWindow):
                 if keithleyAddress=='Test':
                     QtTest.QTest.qWait(1000)
                     
-                data=takeIV(keithleyObject, self.ui.doubleSpinBox_JVminvoltage.value()/1000,self.ui.doubleSpinBox_JVmaxvoltage.value()/1000,self.ui.doubleSpinBox_JVstepsize.value()/1000,self.ui.doubleSpinBox_JVdelaypoints.value(),direction,self.ui.doubleSpinBox_JVintegrationtime.value(), self.ui.doubleSpinBox_JVcurrentlimit.value())
+                # data=takeIV(keithleyObject, self.ui.doubleSpinBox_JVminvoltage.value()/1000,self.ui.doubleSpinBox_JVmaxvoltage.value()/1000,self.ui.doubleSpinBox_JVstepsize.value()/1000,self.ui.doubleSpinBox_JVdelaypoints.value(),direction,self.ui.doubleSpinBox_JVintegrationtime.value(), self.ui.doubleSpinBox_JVcurrentlimit.value())
+                data=takeIV(keithleyObject, self.ui.doubleSpinBox_JVminvoltage.value()/1000,self.ui.doubleSpinBox_JVmaxvoltage.value()/1000,self.ui.doubleSpinBox_JVstepsize.value()/1000,self.ui.doubleSpinBox_JVdelaypoints.value()/1000,direction,1, self.ui.doubleSpinBox_JVcurrentlimit.value())
                 
                 pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
                 currentdensity=[x*1000/pixarea for x in data[:,1]] #assume 1sun, and assume keithley gives Amperes back
