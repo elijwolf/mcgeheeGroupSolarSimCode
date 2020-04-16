@@ -53,11 +53,14 @@
       <property name="sortingEnabled">
        <bool>true</bool>
       </property>
+      <attribute name="horizontalHeaderCascadingSectionResizes">
+       <bool>false</bool>
+      </attribute>
       <attribute name="horizontalHeaderMinimumSectionSize">
        <number>0</number>
       </attribute>
-      <attribute name="horizontalHeaderDefaultSectionSize">
-       <number>80</number>
+      <attribute name="horizontalHeaderStretchLastSection">
+       <bool>true</bool>
       </attribute>
       <attribute name="verticalHeaderDefaultSectionSize">
        <number>23</number>
@@ -115,6 +118,11 @@
       <column>
        <property name="text">
         <string>Jmpp (mA/cm2)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>DateTime</string>
        </property>
       </column>
      </widget>
@@ -1855,12 +1863,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>140</x>
-     <y>573</y>
+     <x>171</x>
+     <y>617</y>
     </hint>
     <hint type="destinationlabel">
-     <x>160</x>
-     <y>545</y>
+     <x>291</x>
+     <y>589</y>
     </hint>
    </hints>
   </connection>
@@ -1871,108 +1879,108 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>192</x>
-     <y>543</y>
+     <x>291</x>
+     <y>589</y>
     </hint>
     <hint type="destinationlabel">
-     <x>205</x>
-     <y>574</y>
+     <x>236</x>
+     <y>617</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>radioButton_pixAll</sender>
-   <signal>clicked()</signal>
+   <signal>clicked(bool)</signal>
    <receiver>checkBox_pixF</receiver>
-   <slot>click()</slot>
+   <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>257</x>
-     <y>667</y>
+     <x>372</x>
+     <y>678</y>
     </hint>
     <hint type="destinationlabel">
-     <x>253</x>
-     <y>641</y>
+     <x>504</x>
+     <y>643</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>radioButton_pixAll</sender>
-   <signal>clicked()</signal>
+   <signal>clicked(bool)</signal>
    <receiver>checkBox_pixE</receiver>
-   <slot>click()</slot>
+   <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>269</x>
-     <y>665</y>
+     <x>372</x>
+     <y>678</y>
     </hint>
     <hint type="destinationlabel">
-     <x>283</x>
-     <y>619</y>
+     <x>372</x>
+     <y>643</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>radioButton_pixAll</sender>
-   <signal>clicked()</signal>
+   <signal>clicked(bool)</signal>
    <receiver>checkBox_pixD</receiver>
-   <slot>click()</slot>
+   <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>304</x>
-     <y>663</y>
+     <x>372</x>
+     <y>678</y>
     </hint>
     <hint type="destinationlabel">
-     <x>296</x>
-     <y>590</y>
+     <x>504</x>
+     <y>607</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>radioButton_pixAll</sender>
-   <signal>clicked()</signal>
+   <signal>clicked(bool)</signal>
    <receiver>checkBox_pixC</receiver>
-   <slot>click()</slot>
+   <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>266</x>
-     <y>663</y>
+     <x>372</x>
+     <y>678</y>
     </hint>
     <hint type="destinationlabel">
-     <x>269</x>
-     <y>568</y>
+     <x>372</x>
+     <y>607</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>radioButton_pixAll</sender>
-   <signal>clicked()</signal>
+   <signal>clicked(bool)</signal>
    <receiver>checkBox_pixB</receiver>
-   <slot>click()</slot>
+   <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>664</y>
+     <x>372</x>
+     <y>678</y>
     </hint>
     <hint type="destinationlabel">
-     <x>293</x>
-     <y>539</y>
+     <x>504</x>
+     <y>571</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>radioButton_pixAll</sender>
-   <signal>clicked()</signal>
+   <signal>clicked(bool)</signal>
    <receiver>checkBox_pixA</receiver>
-   <slot>click()</slot>
+   <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>310</x>
-     <y>667</y>
+     <x>372</x>
+     <y>678</y>
     </hint>
     <hint type="destinationlabel">
-     <x>267</x>
-     <y>516</y>
+     <x>372</x>
+     <y>571</y>
     </hint>
    </hints>
   </connection>

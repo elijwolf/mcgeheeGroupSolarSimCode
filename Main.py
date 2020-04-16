@@ -66,29 +66,14 @@ need to check all units in all function measuring data from keithley
 sequence builder: so user can define himself the sequence of dark, light, mpp... same as done for Jay
 
 
-
-
-
-change text of open/close button according to actual state
-change text of start voltage to start current according to what is selected in drop down menu
-
-when diode measured, and user reclick assume 1sun, it still takes measured sun#
-
-add column date/time in Table, as last column
-
-all button to be thought again!
-
 weird empty lines in table
 
-autosize column width in table
-
-figure in tight layout from start
 
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
-        global AllDATA
+        global AllDATA, shutteropen
         QtWidgets.QMainWindow.__init__(self, parent)
         
         self.ui = Ui_MainWindow()
@@ -99,7 +84,9 @@ class Main(QtWidgets.QMainWindow):
         finish = QAction("Quit", self)
         finish.triggered.connect(lambda: self.closeEvent(self.keithleyObject))
         
-        
+        #shutter initialization, so that software value corresponds to real value
+        self.shutter('OpenShutter',self.keithleyObject)
+        self.shutter('CloseShutter',self.keithleyObject)
         
         self.fig1 = Figure()
         self.JVgraph = self.fig1.add_subplot(111)
@@ -108,6 +95,7 @@ class Main(QtWidgets.QMainWindow):
         self.JVgraph.axhline(y=0, color='k')
         self.JVgraph.axvline(x=0, color='k')
         self.addmpl(self.fig1,self.ui.gridLayout_MPLwidgetJV, self.ui.MPLwidgetJV)
+        
         
         self.fig2 = Figure()
         self.MPPTgraph_JV = self.fig2.add_subplot(221)
@@ -160,7 +148,7 @@ class Main(QtWidgets.QMainWindow):
         
         self.ui.pushButton_exportgraphandfile.clicked.connect(self.Exporttxtplot)
         
-        
+        self.ui.comboBox_MeasType.currentTextChanged.connect(self.on_combobox_changed)
         
     def closeEvent(self, event):
         """ what happens when close the program"""
@@ -180,6 +168,18 @@ class Main(QtWidgets.QMainWindow):
         self.theCursor=self.db_conn.cursor()
         # print("connected to database")
         CreateAllTables(self.db_conn)
+        
+    def on_combobox_changed(self, value):
+        
+        if value == 'FixedVoltage':
+            self.ui.label_20.setText('Fixed voltage (mV):')
+            self.ui.groupBox_MPPTParam.setTitle('FV parameters')
+        elif value == 'FixedCurrent':
+            self.ui.label_20.setText('Fixed current (mA):')
+            self.ui.groupBox_MPPTParam.setTitle('FC parameters')
+        else:
+            self.ui.label_20.setText('Start voltage (mV):')
+            self.ui.groupBox_MPPTParam.setTitle('MPPT parameters')
                 
 #%%######################################################################################################
 
@@ -197,10 +197,23 @@ class Main(QtWidgets.QMainWindow):
         if not shutteropen: #if closed, then we open
             openShutter(keithleyObject)
             shutteropen=1
+            self.ui.pushButton_OpenCloseShutter.setText('Close shutter')
         else: #if open, then we close
             closeShutter(keithleyObject)
             shutteropen=0
+            self.ui.pushButton_OpenCloseShutter.setText('Open shutter')
             
+    def shutter(self,action,keithleyObject):
+        global shutteropen
+        
+        if action == 'OpenShutter':
+            openShutter(keithleyObject)
+            shutteropen=1
+            self.ui.pushButton_OpenCloseShutter.setText('Close shutter')
+        else:
+            closeShutter(keithleyObject)
+            shutteropen=0
+            self.ui.pushButton_OpenCloseShutter.setText('Open shutter')  
         
 #%%######################################################################################################
     def Popup_CheckDiode(self):
@@ -220,13 +233,13 @@ class Main(QtWidgets.QMainWindow):
         global RefDiodeChecked, Sunintensity
         # print('measuring ref diode')
         
-        openShutter(keithleyObject)
+        self.shutter('OpenShutter',keithleyObject)
         prepareCurrent(keithleyObject, NPLC = 1)
         dataCurrent = measureCurrent(keithleyObject,voltage=0.0,n=20)
         self.ui.doubleSpinBox_MeasuredDiodeCurrent.setValue(abs(mean(dataCurrent[:,1])))
         Sunintensity=self.ui.doubleSpinBox_DiodeNominalCurrent.value()/abs(mean(dataCurrent[:,1]))
         self.ui.doubleSpinBox_NumbSun.setValue(Sunintensity)
-        
+        self.shutter('CloseShutter',keithleyObject)
         RefDiodeChecked=1
     
     def stopmeas(self):
@@ -292,7 +305,7 @@ class Main(QtWidgets.QMainWindow):
             Sunintensity=1
             go=1
         if go or RefDiodeChecked:
-            if RefDiodeChecked:
+            if RefDiodeChecked and not self.ui.radioButton_Assume1sun.isChecked():
                 Sunintensity=self.ui.doubleSpinBox_NumbSun.value()
         
             ########
@@ -330,227 +343,183 @@ class Main(QtWidgets.QMainWindow):
                 #########################
                 if sequence == 'LIV':
                     # print('LIV')
-                    openShutter(keithleyObject)
-                    shutteropen=1
+                    self.shutter('OpenShutter',keithleyObject)
                     QtTest.QTest.qWait(self.ui.doubleSpinBox_JVdelayshutter.value())
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     
                 if sequence == 'DIV':
                     # print('DIV')
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     
                 if sequence == 'DIV-LIV':
                     # print('DIV-LIV')
                     # print('DIV')
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     # print('LIV')
-                    openShutter(keithleyObject)
-                    shutteropen=1
+                    self.shutter('OpenShutter',keithleyObject)
                     QtTest.QTest.qWait(self.ui.doubleSpinBox_JVdelayshutter.value())
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     
                 if sequence == 'MPPT':
                     # print('MPPT')
                     if self.ui.checkBox_MPPTlighton.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                         
                     self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                 
                 if sequence == 'FixedVoltage':
                     # print('FixedVoltage')
                     if self.ui.checkBox_MPPTlighton.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     
                     self.Tracking(keithleyObject,'FixedVoltage', pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     
                 if sequence == 'FixedCurrent':
                     # print('FixedCurrent')
                     if self.ui.checkBox_MPPTlighton.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                         
                     self.Tracking(keithleyObject,'FixedCurrent', pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     
                 if sequence == 'LIV-MPPT-LIV':
                     # print('LIV-MPPT-LIV')
-                    openShutter(keithleyObject)
-                    shutteropen=1
+                    self.shutter('OpenShutter',keithleyObject)
                     STOPMEAS=0
                     QtTest.QTest.qWait(self.ui.doubleSpinBox_JVdelayshutter.value())
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlighton.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0    
                     self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     
                     STOPMEAS=0
                     aftermpp=1
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     aftermpp=0
                     
                 if sequence == 'LIV-bestpixMPPT-LIV':
                     # print('LIV-bestpixMPPT-LIV')
-                    openShutter(keithleyObject)
-                    shutteropen=1
+                    self.shutter('OpenShutter',keithleyObject)
                     STOPMEAS=0
                     QtTest.QTest.qWait(self.ui.doubleSpinBox_JVdelayshutter.value())
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlighton.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0    
                     self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     
                     STOPMEAS=0
                     aftermpp=1
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     aftermpp=0
                     
                 if sequence == 'DIV-LIV-MPPT-LIV':
                     # print('DIV-LIV-MPPT-LIV')
                     # print('DIV')
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     
                     # print('LIV')
                     STOPMEAS=0
-                    openShutter(keithleyObject)
-                    shutteropen=1
+                    self.shutter('OpenShutter',keithleyObject)
                     QtTest.QTest.qWait(self.ui.doubleSpinBox_JVdelayshutter.value())
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     
                     # print('MPPT')
                     if self.ui.checkBox_MPPTlighton.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0    
                     self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                         
                     # print('LIV')
                     STOPMEAS=0
                     aftermpp=1
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     aftermpp=0
                     
                 if sequence == 'DIV-LIV-bestpixMPPT-LIV':
                     # print('DIV-LIV-bestpixMPPT-LIV')
                     # print('DIV')
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     # print('LIV')
                     STOPMEAS=0
-                    openShutter(keithleyObject)
-                    shutteropen=1
+                    self.shutter('OpenShutter',keithleyObject)
                     QtTest.QTest.qWait(self.ui.doubleSpinBox_JVdelayshutter.value())
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
                     
                     # print('MPPT')
                     if self.ui.checkBox_MPPTlighton.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0    
                     self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, scandirections, i)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
-                        openShutter(keithleyObject)
-                        shutteropen=1
+                        self.shutter('OpenShutter',keithleyObject)
                     else:
-                        closeShutter(keithleyObject)
-                        shutteropen=0
+                        self.shutter('CloseShutter',keithleyObject)
                         
                     # print('LIV')
                     STOPMEAS=0
                     aftermpp=1
                     self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, i)
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                     aftermpp=0
                     
                 if self.ui.spinBox_RepNumb.value()>1:
@@ -620,11 +589,9 @@ class Main(QtWidgets.QMainWindow):
                 step=self.ui.spinBox_MPPTstepsize.value()
                 
                 if self.ui.checkBox_MPPTlighton.isChecked():
-                    openShutter(keithleyObject)
-                    shutteropen=1
+                    self.shutter('OpenShutter',keithleyObject)
                 else:
-                    closeShutter(keithleyObject)
-                    shutteropen=0
+                    self.shutter('CloseShutter',keithleyObject)
                 
                 if trackingtype=='FixedVoltage':
                     dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,5)
@@ -672,11 +639,9 @@ class Main(QtWidgets.QMainWindow):
                         step=self.ui.spinBox_MPPTstepsize.value()
                         delay=self.ui.doubleSpinBox_MPPTdelaypoints.value()
                         if self.ui.checkBox_MPPTlighton.isChecked():
-                            openShutter(keithleyObject)
-                            shutteropen=1
+                            self.shutter('OpenShutter',keithleyObject)
                         else:
-                            closeShutter(keithleyObject)
-                            shutteropen=0
+                            self.shutter('CloseShutter',keithleyObject)
                         
                         dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,5)
                         currentden=abs(mean(dataCurrent[:,1]))/pixarea
@@ -1020,14 +985,14 @@ class Main(QtWidgets.QMainWindow):
             #samplename in table samples, with batch_id
             self.theCursor.execute("SELECT id FROM samples WHERE samplename =? AND batch_id =?",(DATA[sample]['SampleName'],batch_id_exists,))
             samples_id_exists = self.theCursor.fetchone()
-            print(samples_id_exists)
+            # print(samples_id_exists)
             if samples_id_exists==None:
                 self.theCursor.execute("INSERT INTO samples (samplename,batch_id) VALUES (?,?)",
                                 (DATA[sample]['SampleName'],batch_id_exists,))
                 samples_id_exists=self.theCursor.lastrowid
             else:
                 samples_id_exists=samples_id_exists[0]
-            print(samples_id_exists)
+            # print(samples_id_exists)
             
             #sample pixel area
             self.theCursor.execute("SELECT id FROM pixelarea WHERE pixel_area =?",(DATA[sample]['pixelArea'],))
@@ -1229,7 +1194,8 @@ class Main(QtWidgets.QMainWindow):
             self.ui.tableWidget.setItem(i,7,QTableWidgetItem('%.2f' % listdata[key]['Rsc']))
             self.ui.tableWidget.setItem(i,8,QTableWidgetItem('%.2f' % listdata[key]['Pmpp']))
             self.ui.tableWidget.setItem(i,9,QTableWidgetItem('%.2f' % listdata[key]['Vmpp']))
-            self.ui.tableWidget.setItem(i,10,QTableWidgetItem('%.2f' % listdata[key]['Jmpp']))            
+            self.ui.tableWidget.setItem(i,10,QTableWidgetItem('%.2f' % listdata[key]['Jmpp']))   
+            self.ui.tableWidget.setItem(i,11,QTableWidgetItem(listdata[key]['datetime'].toString(QtCore.Qt.ISODate)))
             i+=1
             
     def ClearTable(self):
