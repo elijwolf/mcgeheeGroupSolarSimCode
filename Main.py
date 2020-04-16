@@ -80,15 +80,10 @@ all button to be thought again!
 
 weird empty lines in table
 
-make the light on? check live in tracking
-
 autosize column width in table
 
-make resizable the first window
+figure in tight layout from start
 
-check load/save functions
-
-add preparevoltage to refdiode measure
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
@@ -226,6 +221,7 @@ class Main(QtWidgets.QMainWindow):
         # print('measuring ref diode')
         
         openShutter(keithleyObject)
+        prepareCurrent(keithleyObject, NPLC = 1)
         dataCurrent = measureCurrent(keithleyObject,voltage=0.0,n=20)
         self.ui.doubleSpinBox_MeasuredDiodeCurrent.setValue(abs(mean(dataCurrent[:,1])))
         Sunintensity=self.ui.doubleSpinBox_DiodeNominalCurrent.value()/abs(mean(dataCurrent[:,1]))
@@ -623,6 +619,13 @@ class Main(QtWidgets.QMainWindow):
                 delay=self.ui.doubleSpinBox_MPPTdelaypoints.value()
                 step=self.ui.spinBox_MPPTstepsize.value()
                 
+                if self.ui.checkBox_MPPTlighton.isChecked():
+                    openShutter(keithleyObject)
+                    shutteropen=1
+                else:
+                    closeShutter(keithleyObject)
+                    shutteropen=0
+                
                 if trackingtype=='FixedVoltage':
                     dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,5)
                     currentden=abs(mean(dataCurrent[:,1]))/pixarea
@@ -668,6 +671,12 @@ class Main(QtWidgets.QMainWindow):
                     while True:
                         step=self.ui.spinBox_MPPTstepsize.value()
                         delay=self.ui.doubleSpinBox_MPPTdelaypoints.value()
+                        if self.ui.checkBox_MPPTlighton.isChecked():
+                            openShutter(keithleyObject)
+                            shutteropen=1
+                        else:
+                            closeShutter(keithleyObject)
+                            shutteropen=0
                         
                         dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,5)
                         currentden=abs(mean(dataCurrent[:,1]))/pixarea
@@ -1263,29 +1272,60 @@ class Main(QtWidgets.QMainWindow):
             
     
 #%%######################################################################################################
-class Window(QtWidgets.QMainWindow):
+class Window(QtWidgets.QDialog):
     def __init__(self):
         super().__init__()
         
+        self.resize(607, 151)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        self.setSizePolicy(sizePolicy)
+        self.setMinimumSize(QtCore.QSize(430, 92))
+        self.gridLayout = QtWidgets.QGridLayout(self)
+        self.setWindowTitle("Will you choose the Red or the Blue pill?")
+        self.pushButton_Simulation = QtWidgets.QPushButton("Do you want to work without connection to the keithley?", self)
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(0, 0, 255))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.ButtonText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(0, 0, 255))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.ButtonText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(120, 120, 120))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, brush)
+        self.pushButton_Simulation.setPalette(palette)
+        self.pushButton_Simulation.setObjectName("pushButton_Simulation")
+        self.gridLayout.addWidget(self.pushButton_Simulation, 3, 0, 1, 2)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout.addItem(spacerItem, 4, 0, 1, 1)
         self.pushButton_Reality = QtWidgets.QPushButton("Do you want to see the reality and actually measure devices with a keithley?", self)
-        self.pushButton_Reality.move(20, 10)
-        self.pushButton_Reality.resize(400,30)
-        self.pushButton_Reality.setStyleSheet('QPushButton {background-color: #A3C1DA; color: red;}')
-        
-        self.pushButton_Simul = QtWidgets.QPushButton("Do you want to work without connection to the keithley?", self)
-        self.pushButton_Simul.move(20, 50)
-        self.pushButton_Simul.resize(400,30)
-        self.pushButton_Simul.setStyleSheet('QPushButton {background-color: #A3C1DA; color: blue;}')
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.ButtonText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.ButtonText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(120, 120, 120))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, brush)
+        self.pushButton_Reality.setPalette(palette)
+        self.pushButton_Reality.setObjectName("pushButton_Reality")
+        self.gridLayout.addWidget(self.pushButton_Reality, 2, 0, 1, 2)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout.addItem(spacerItem1, 1, 0, 1, 1)
+
         
         self.pushButton_Reality.clicked.connect(self.MainReal)   
-        self.pushButton_Simul.clicked.connect(self.MainSimul)
+        self.pushButton_Simulation.clicked.connect(self.MainSimul)
 
-        self.setFixedSize(450, 100)
-        self.setWindowTitle("Will you choose the Red or the Blue pill?")
         self.show()
 
-    def MainReal(self): #not totally sure this will work, need to be tested
-        global boxCurrent, BoxVoltage, keithleyAddress, connectPixel
+    def MainReal(self): 
+        global boxCurrent, boxVoltage, keithleyAddress, connectPixel
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'Advantech Code'))
         from pixelControl import connectPixel 
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'Advantech Code'))
@@ -1298,14 +1338,7 @@ class Window(QtWidgets.QMainWindow):
         self.w.show()
         self.hide()
         
-    def MainSimul(self):  
-        # global boxCurrent, BoxVoltage, keithleyAddress, connectPixel
-        # def connectPixel(box1, box2, pixelName):
-        #     print('Pixel '+pixelName+' connected')
-    
-        # boxCurrent = 'test'
-        # boxVoltage = 'test'
-        # keithleyAddress='Test' 
+    def MainSimul(self):   
 
         self.w = Main()
         self.w.show()

@@ -139,9 +139,9 @@ def SaveParamTemplate(self):
     
     fname = QFileDialog.getSaveFileName(self, 'Save file', 'c:\\',"Text files (*.txt)")
     with open(fname[0],'w') as file:
-        text='UserName\t'+ str(self.ui.lineEdit_UserName.text())+\
-            'SampleName\t'+ str(self.ui.lineEdit_SampleName.text())+\
-            'Comment\t'+str(self.ui.lineEdit_Comment.text())+\
+        text='UserName\t'+ str(self.ui.lineEdit_UserName.text())+'\n'+\
+            'SampleName\t'+ str(self.ui.lineEdit_SampleName.text())+'\n'+\
+            'Comment\t'+str(self.ui.lineEdit_Comment.text())+'\n'+\
             'Meas. type\t'+ str(self.ui.comboBox_MeasType.currentText())+'\n'+\
             '#rep\t'+ str(self.ui.spinBox_RepNumb.value())+'\n'+\
             'DelayRep\t'+ str(self.ui.spinBox_RepDelay.value())+'\n'+\
