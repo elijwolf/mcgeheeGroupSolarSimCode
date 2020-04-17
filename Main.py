@@ -1,4 +1,5 @@
 import sys
+import datetime
 import os
 from pathlib import Path
 import traceback
@@ -596,11 +597,11 @@ class Main(QtWidgets.QMainWindow):
                 
                 if trackingtype=='FixedVoltage':
                     dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
-                    currentden=abs(mean(dataCurrent[:,1]))/pixarea
-                    current=abs(mean(dataCurrent[:,1]))
+                    currentden=1000*abs(mean(dataCurrent[:,1]))/pixarea #mA/cm2
+                    current=abs(mean(dataCurrent[:,1])) #A
                     currentlist.append(float(current))
                     currentdensitylist.append(float(currentden))
-                    voltagelist.append(float(voltagefixed/1000))
+                    voltagelist.append(float(voltagefixed))#/1000))  #mV
                     powerlist.append(float(currentden*voltagefixed/1000)/Sunintensity)
                     timelist.append(float(elapsed_timer.elapsed()/1000))
                     steplist.append(step)
@@ -645,7 +646,7 @@ class Main(QtWidgets.QMainWindow):
                             self.shutter('CloseShutter',keithleyObject)
                         
                         dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
-                        currentden=abs(mean(dataCurrent[:,1]))/pixarea
+                        currentden=1000*abs(mean(dataCurrent[:,1]))/pixarea
                         current=abs(mean(dataCurrent[:,1]))
                         
                         currentlist.append(current)
@@ -774,39 +775,87 @@ class Main(QtWidgets.QMainWindow):
                 if keithleyAddress=='Test':
                     QtTest.QTest.qWait(1000)
                     
-                # data=takeIV(keithleyObject, self.ui.doubleSpinBox_JVminvoltage.value()/1000,self.ui.doubleSpinBox_JVmaxvoltage.value()/1000,self.ui.doubleSpinBox_JVstepsize.value()/1000,self.ui.doubleSpinBox_JVdelaypoints.value(),direction,self.ui.doubleSpinBox_JVintegrationtime.value(), self.ui.doubleSpinBox_JVcurrentlimit.value())
-                data=takeIV(keithleyObject, self.ui.doubleSpinBox_JVminvoltage.value()/1000,self.ui.doubleSpinBox_JVmaxvoltage.value()/1000,self.ui.doubleSpinBox_JVstepsize.value()/1000,self.ui.doubleSpinBox_JVdelaypoints.value()/1000,direction,1, self.ui.doubleSpinBox_JVcurrentlimit.value())
+                # NPLC of 1 with 60Hz power, new value every 16.67ms
+                # integtime=50ms => NPLC = 50*1/16.67 = 2.999
                 
+                minV=self.ui.doubleSpinBox_JVminvoltage.value()/1000
+                maxV=self.ui.doubleSpinBox_JVmaxvoltage.value()/1000
+                stepV=self.ui.doubleSpinBox_JVstepsize.value()/1000
+                delay=self.ui.doubleSpinBox_JVdelaypoints.value()
+                forw=direction#0=rev, 1=fwd
+                integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
+                NPLC=integtime/16.67
+                if NPLC>10:
+                    NPLC=10
+                currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
+                nMeas=2
                 pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
-                currentdensity=[x*1000/pixarea for x in data[:,1]] #assume 1sun, and assume keithley gives Amperes back
                 
-                if direction == 1:#forward scan
-                    directionstr='fwd'
-                    self.JVgraph.plot(data[:,0],currentdensity, linestyle="dashed",color=pixcolor)
-                elif direction == 0:#reverse scan
-                    directionstr='rev'
-                    self.JVgraph.plot(data[:,0],currentdensity, linestyle="solid",color=pixcolor)
-                self.fig1.canvas.draw_idle()
+                if not forw:
+                    startV, stopV = maxV, minV
+                    stepV *= -1
+                else:
+                    startV, stopV = minV, maxV
+                
+                volts = np.arange(startV, stopV+stepV, stepV)
+                
+                prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
+                
+                currentdenlist=[]
+                currentlist=[]
+                voltagelist=[]
                 
                 if shutteropen:
                     illum='lt'
+                    self.ClearGraph('LIV')
                 else:
                     illum='dk'
-                if illum == 'dk':
-                    if direction == 1:#forward scan
-                        self.DIVgraphlin.plot(data[:,0],currentdensity, linestyle="dashed",color=pixcolor)
-                    elif direction == 0:#reverse scan
-                        self.DIVgraphlin.plot(data[:,0],currentdensity, linestyle="solid",color=pixcolor)
-                    ydataabs=list(map(lambda x: abs(x),currentdensity))
-                    if direction == 1:#forward scan
-                        self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="dashed",color=pixcolor)
-                    elif direction == 0:#reverse scan
-                        self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="solid",color=pixcolor)
-                    self.fig3.canvas.draw_idle()
-                    self.fig3.canvas.flush_events()
-
-                self.fig1.canvas.flush_events()
+                    self.ClearGraph('DIV')
                 
+                for sampleitem in lastmeasDATA.keys():
+                    pixcoloritem=lastmeasDATA[sampleitem]['pixcolor']
+                    if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                        self.JVgraph.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="dashed",color=pixcoloritem)
+                    else:#reverse scan
+                        self.JVgraph.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="solid",color=pixcoloritem)
+                    if lastmeasDATA[sampleitem]['illum'] == 'dk':
+                        if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                            self.DIVgraphlin.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="dashed",color=pixcoloritem)
+                        else:#reverse scan
+                            self.DIVgraphlin.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="solid",color=pixcoloritem)
+                        ydataabs=list(map(lambda x: abs(x),lastmeasDATA[sampleitem]['CurrentDensity']))
+                        if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                            self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="dashed",color=pixcoloritem)
+                        else:#reverse scan
+                            self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="solid",color=pixcoloritem)
+                
+                if direction == 1:#forward scan
+                    directionstr='fwd'
+                elif direction == 0:#reverse scan
+                    directionstr='rev'
+                for step in volts:
+                    starttime=datetime.datetime.now()
+                    dataCurrent=measureCurrent(keithleyObject,step,nMeas)
+                    currentdenlist.append(1000*mean(dataCurrent[:,1])/pixarea)
+                    currentlist.append(mean(dataCurrent[:,1]))
+                    voltagelist.append(step)
+                    
+                    self.JVgraph.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
+                    
+                    if illum == 'dk':
+                        self.DIVgraphlin.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
+                        ydataabs=list(map(lambda x: abs(x),currentdenlist))
+                        self.DIVgraphlogY.semilogy(voltagelist,ydataabs, 'o',color=pixcolor)
+                        self.fig3.canvas.draw_idle()
+                        self.fig3.canvas.flush_events()
+                    
+                    self.fig1.canvas.draw_idle()    
+                    self.fig1.canvas.flush_events()  
+                    
+                    # QtTest.QTest.qWait(delay)
+                    # print((datetime.datetime.now()-starttime).microseconds/1000)
+                    while (datetime.datetime.now()-starttime).microseconds/1000<delay:
+                        pass
                 
                 if self.ui.radioButton_Assume1sun.isChecked():
                     radioButton_Assume1sun='True'
@@ -835,25 +884,46 @@ class Main(QtWidgets.QMainWindow):
                                  'RefDiodeNomCurr':self.ui.doubleSpinBox_DiodeNominalCurrent.value(),'RefDiodeMeasCurr':self.ui.doubleSpinBox_MeasuredDiodeCurrent.value(),
                                  'datetime': QtCore.QDateTime.currentDateTime(), 'Comment': commenttext,'temperature':self.ui.doubleSpinBox_Temperature.value(),
                                  'UserName': str(self.ui.lineEdit_UserName.text()), 'MeasType': str(self.ui.comboBox_MeasType.currentText()),'MeasNowType': 'IV',
-                                 'RepNumb': Rep,'DelayRep':self.ui.spinBox_RepDelay.value(), 'pixelArea': pixarea,'assume1sun':radioButton_Assume1sun,'ShutterOpen':shutteropen,
+                                 'pixcolor':pixcolor,'RepNumb': Rep,'DelayRep':self.ui.spinBox_RepDelay.value(), 'pixelArea': pixarea,'assume1sun':radioButton_Assume1sun,'ShutterOpen':shutteropen,
                                  'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
                                  'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
                                  'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
                                  'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
                                  'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
-                                 'Voltage':data[:,0],'Current':data[:,1], 'CurrentDensity': currentdensity
+                                 'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
                                  }
                 lastmeasDATA[sample]=AllDATA[sample]
 
                 self.AnalysisJV(sample)
                 self.Savedata(sample,AllDATA)
                 self.UpdateTable(lastmeasDATA)
-                # self.loadtoDB(sample,AllDATA)
                 
                 if STOPMEAS==1:
                     break
             if STOPMEAS==1:
                 break
+            
+        if shutteropen:
+            self.ClearGraph('LIV')
+        else:
+            self.ClearGraph('DIV')
+        for sampleitem in lastmeasDATA.keys():
+            pixcoloritem=lastmeasDATA[sampleitem]['pixcolor']
+            if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                self.JVgraph.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="dashed",color=pixcoloritem)
+            elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                self.JVgraph.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="solid",color=pixcoloritem)
+            if lastmeasDATA[sampleitem]['illum'] == 'dk':
+                if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                    self.DIVgraphlin.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="dashed",color=pixcoloritem)
+                elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                    self.DIVgraphlin.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="solid",color=pixcoloritem)
+                ydataabs=list(map(lambda x: abs(x),lastmeasDATA[sampleitem]['CurrentDensity']))
+                if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                    self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="dashed",color=pixcoloritem)
+                elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                    self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="solid",color=pixcoloritem)
+        
         self.loadtoDB('IV',lastmeasDATA,lastmeastrackingDATA)  
     
     def Savedata(self, sample, DATA):

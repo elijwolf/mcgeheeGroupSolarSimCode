@@ -9,7 +9,7 @@ from PyQt5 import QtTest
 - determine Digital Output configuration required to open and close the shutter. The functions currently work, but the output configuration is a guess.
 '''
 ###############
-def connectToKeithley(keithleyAddress='GPIB0::22::INSTR',rm=pyvisa.ResourceManager()):
+def connectToKeithley(keithleyAddress='GPIB0::22::INSTR',rm='pyvisa.ResourceManager()'):
 	'''
 	This creates a Keithley object with which to interact with.
 	Attempt to connect to a Keithley, then send an ID query to confirm connection. If this fails, send an error message to the terminal and terminate the program.
@@ -53,10 +53,10 @@ def connectToKeithley(keithleyAddress='GPIB0::22::INSTR',rm=pyvisa.ResourceManag
 		return keithleyAddress
 
 	try:
-		rm = pyvisa.ResourceManager()
+# 		rm = pyvisa.ResourceManager()
 		# print(rm.list_resources())
 		print ('Attempting to connect to keithley.')
-		keithleyObject = rm.open_resource(keithleyAddress)
+		keithleyObject = eval(rm).open_resource(keithleyAddress)
 		print (keithleyObject.query('*IDN?'))
 		# keithleyObject.timeout = 100000
 		keithleyObject.write('*RST')
@@ -110,7 +110,7 @@ def measureVoltage(keithleyObject, current=0, n=1):
 	data = rawDataArray
 	return data
 
-def prepareCurrent(keithleyObject, NPLC=1):
+def prepareCurrent(keithleyObject, NPLC=1, currentlimit=10^-2):
 	'''
 	Prepares the Keithley to measure current.
 	NPLC Range [0.01,10]
@@ -121,7 +121,7 @@ def prepareCurrent(keithleyObject, NPLC=1):
 	keithleyObject.write('SOUR:VOLT:MODE FIXED')
 	keithleyObject.write('SOUR:VOLT:RANG:AUTO ON')
 	keithleyObject.write('SENS:FUNC "CURR"')
-	keithleyObject.write('SENS:CURR:PROT 10E-2')
+	keithleyObject.write('SENS:CURR:PROT {:.3f}'.format(currentlimit))
 	keithleyObject.write('SENS:CURR:RANG:AUTO ON')
 	keithleyObject.write('SENS:CURR:NPLC {:.3f}'.format(NPLC))
 	keithleyObject.write('OUTP ON')
@@ -230,11 +230,11 @@ def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=0.01, forw=1, N
 	data = np.reshape(rawData, (-1,5))
 	return data
 
-def shutdownKeithley(keithleyObject,rm=pyvisa.ResourceManager()):
+def shutdownKeithley(keithleyObject,rm='pyvisa.ResourceManager()'):
 	if keithleyObject == 'Test':
 		return
 	keithleyObject.write('OUTP OFF')
-	rm.close()
+	eval(rm).close()
 
 if __name__ == "__main__":
 
