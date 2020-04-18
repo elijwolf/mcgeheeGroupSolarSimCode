@@ -775,10 +775,10 @@ class Main(QtWidgets.QMainWindow):
             pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
             pixcolor=pixcolorslist[item]
             
-            integtime=self.ui.doubleSpinBox_JVintegrationtime.value()/1000
+            integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
             # NPLC of 1 with 60Hz power, new value every 16.67ms
             # integtime=50ms => NPLC = .050*60 = 3
-            NPLC=integtime*60
+            NPLC=integtime*60/1000
             if NPLC>10:
                 NPLC=10
             if NPLC<0.01:
