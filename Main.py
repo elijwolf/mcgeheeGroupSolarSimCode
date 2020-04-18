@@ -11,6 +11,7 @@ from scipy.interpolate import interp1d as interp
 import sqlite3
 #%%######################################################################################################
 import matplotlib
+import matplotlib.pyplot as plt
 matplotlib.use("Qt5Agg")
 #%%######################################################################################################
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -802,6 +803,10 @@ class Main(QtWidgets.QMainWindow):
                 else:
                     illum='dk'
                     self.ClearGraph('DIV')
+                self.fig1.canvas.draw()
+                self.fig3.canvas.draw()
+                plt.show(block=False)
+                
                 print(lastmeasDATA.keys())
                 for sampleitem in lastmeasDATA.keys():
                     pixcoloritem=lastmeasDATA[sampleitem]['pixcolor']
@@ -819,6 +824,7 @@ class Main(QtWidgets.QMainWindow):
                             self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="dashed",color=pixcoloritem)
                         else:#reverse scan
                             self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="solid",color=pixcoloritem)
+                
                 
                 if direction == 1:#forward scan
                     directionstr='fwd'
@@ -849,15 +855,17 @@ class Main(QtWidgets.QMainWindow):
                         self.DIVgraphlin.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
                         ydataabs=list(map(lambda x: abs(x),currentdenlist))
                         self.DIVgraphlogY.semilogy(voltagelist,ydataabs, 'o',color=pixcolor)
-                        self.fig3.canvas.draw_idle()
+                        # self.fig3.canvas.draw_idle()
+                        self.fig3.canvas.draw()
                         self.fig3.canvas.flush_events()
                     
-                    self.fig1.canvas.draw_idle()    
+                    # self.fig1.canvas.draw_idle() 
+                    self.fig1.canvas.draw()
                     self.fig1.canvas.flush_events()  
                     
                     # QtTest.QTest.qWait(delay)
                     # print((datetime.datetime.now()-starttime).microseconds/1000)
-                    while (datetime.datetime.now()-starttime).microseconds/1000<delay:
+                    while (datetime.datetime.now()-starttime).microseconds/1000< (delay+integtime):
                         pass
                 
                 if self.ui.radioButton_Assume1sun.isChecked():
@@ -1371,8 +1379,8 @@ class Window(QtWidgets.QDialog):
         from pixelControl import connectPixel 
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'Advantech Code'))
         import pyDAQNavi as pDN
-        boxCurrent = pDN.DeviceObject('DemoDevice,BID#0')
-        boxVoltage = pDN.DeviceObject('DemoDevice,BID#1')
+        boxCurrent = pDN.DeviceObject('USB-4761,BID#0')
+        boxVoltage = pDN.DeviceObject('USB-4761,BID#1')
         keithleyAddress='GPIB0::22::INSTR'   
 
         self.w = Main()
