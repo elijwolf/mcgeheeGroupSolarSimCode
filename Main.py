@@ -769,27 +769,27 @@ class Main(QtWidgets.QMainWindow):
             
         for item in range(len(pixels)):
             connectPixel(boxCurrent, boxVoltage, pixels[item])
-            
+            pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
             pixcolor=pixcolorslist[item]
+            minV=self.ui.doubleSpinBox_JVminvoltage.value()/1000
+            maxV=self.ui.doubleSpinBox_JVmaxvoltage.value()/1000
+            stepV=self.ui.doubleSpinBox_JVstepsize.value()/1000
+            delay=self.ui.doubleSpinBox_JVdelaypoints.value()
+            integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
+            # NPLC of 1 with 60Hz power, new value every 16.67ms
+            # integtime=50ms => NPLC = 50*1/16.67 = 2.999
+            NPLC=integtime/16.67
+            if NPLC>10:
+                NPLC=10
+            currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
+            nMeas=2
+            prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
+            
             for direction in scandirections:
                 if keithleyAddress=='Test':
-                    QtTest.QTest.qWait(1000)
-                    
-                # NPLC of 1 with 60Hz power, new value every 16.67ms
-                # integtime=50ms => NPLC = 50*1/16.67 = 2.999
-                
-                minV=self.ui.doubleSpinBox_JVminvoltage.value()/1000
-                maxV=self.ui.doubleSpinBox_JVmaxvoltage.value()/1000
-                stepV=self.ui.doubleSpinBox_JVstepsize.value()/1000
-                delay=self.ui.doubleSpinBox_JVdelaypoints.value()
+                    QtTest.QTest.qWait(500)
+
                 forw=direction#0=rev, 1=fwd
-                integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
-                NPLC=integtime/16.67
-                if NPLC>10:
-                    NPLC=10
-                currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
-                nMeas=2
-                pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
                 
                 if not forw:
                     startV, stopV = maxV, minV
@@ -799,7 +799,6 @@ class Main(QtWidgets.QMainWindow):
                 
                 volts = np.arange(startV, stopV+stepV, stepV)
                 
-                prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
                 
                 currentdenlist=[]
                 currentlist=[]
