@@ -841,10 +841,43 @@ class Main(QtWidgets.QMainWindow):
                 currentdenlist=[]
                 currentlist=[]
                 voltagelist=[]
-                # print(volts)
+                # lines = []
+                # # print(volts)
                 
-                line, = self.JVgraph.plot([],'o')
-                lines.append(line)
+                # line, = self.JVgraph.plot([],'o')
+                # lines.append(line)
+                
+                # for step in volts:
+                #     starttime=datetime.datetime.now()
+                #     dataCurrent=measureCurrent(keithleyObject,step,nMeas)
+                #     currentdenlist.append(1000*mean(dataCurrent[:,1])/pixarea)
+                #     currentlist.append(mean(dataCurrent[:,1]))
+                #     voltagelist.append(step)
+                    
+                #     lines[0].set_data(voltagelist,currentdenlist)
+                #     self.fig1.canvas.draw()
+                #     self.fig1.canvas.flush_events()
+                    
+                #     # self.JVgraph.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
+                    
+                #     # if illum == 'dk':
+                #     #     self.DIVgraphlin.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
+                #     #     ydataabs=list(map(lambda x: abs(x),currentdenlist))
+                #     #     self.DIVgraphlogY.semilogy(voltagelist,ydataabs, 'o',color=pixcolor)
+                #     #     # self.fig3.canvas.draw_idle()
+                #     #     self.fig3.canvas.draw()
+                #     #     self.fig3.canvas.flush_events()
+                    
+                #     # # self.fig1.canvas.draw_idle() 
+                #     # self.fig1.canvas.draw()
+                #     # self.fig1.canvas.flush_events()  
+                    
+                #     # QtTest.QTest.qWait(delay)
+                #     # print((datetime.datetime.now()-starttime).microseconds/1000)
+                #     while (datetime.datetime.now()-starttime).microseconds/1000< (delay+integtime):
+                #         pass
+                
+                
                 
                 for step in volts:
                     starttime=datetime.datetime.now()
@@ -871,34 +904,6 @@ class Main(QtWidgets.QMainWindow):
                     # print((datetime.datetime.now()-starttime).microseconds/1000)
                     while (datetime.datetime.now()-starttime).microseconds/1000< (delay+integtime):
                         pass
-                
-                
-                
-                # for step in volts:
-                #     starttime=datetime.datetime.now()
-                #     dataCurrent=measureCurrent(keithleyObject,step,nMeas)
-                #     currentdenlist.append(1000*mean(dataCurrent[:,1])/pixarea)
-                #     currentlist.append(mean(dataCurrent[:,1]))
-                #     voltagelist.append(step)
-                    
-                #     self.JVgraph.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
-                    
-                #     if illum == 'dk':
-                #         self.DIVgraphlin.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
-                #         ydataabs=list(map(lambda x: abs(x),currentdenlist))
-                #         self.DIVgraphlogY.semilogy(voltagelist,ydataabs, 'o',color=pixcolor)
-                #         # self.fig3.canvas.draw_idle()
-                #         self.fig3.canvas.draw()
-                #         self.fig3.canvas.flush_events()
-                    
-                #     # self.fig1.canvas.draw_idle() 
-                #     self.fig1.canvas.draw()
-                #     self.fig1.canvas.flush_events()  
-                    
-                #     # QtTest.QTest.qWait(delay)
-                #     # print((datetime.datetime.now()-starttime).microseconds/1000)
-                #     while (datetime.datetime.now()-starttime).microseconds/1000< (delay+integtime):
-                #         pass
                 
                 if self.ui.radioButton_Assume1sun.isChecked():
                     radioButton_Assume1sun='True'
