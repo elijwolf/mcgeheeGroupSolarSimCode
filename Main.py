@@ -70,6 +70,7 @@ sequence builder: so user can define himself the sequence of dark, light, mpp...
 
 weird empty lines in table
 
+The delay between steps is not saved when saving and loading a configuration
 
 """
 #%%######################################################################################################
