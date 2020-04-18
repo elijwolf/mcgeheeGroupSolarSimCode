@@ -752,6 +752,8 @@ class Main(QtWidgets.QMainWindow):
     def PlotIV(self, keithleyObject, pixels, pixcolorslist, scandirections, Rep):
         global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
         global aftermpp,boxCurrent, boxVoltage, keithleyAddress
+        print('')
+        print(scandirections)
         allpixtobemeasured=''
         for item in range(len(pixels)):
             allpixtobemeasured+=pixels[item]
@@ -771,10 +773,7 @@ class Main(QtWidgets.QMainWindow):
             connectPixel(boxCurrent, boxVoltage, pixels[item])
             pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
             pixcolor=pixcolorslist[item]
-            minV=self.ui.doubleSpinBox_JVminvoltage.value()/1000
-            maxV=self.ui.doubleSpinBox_JVmaxvoltage.value()/1000
-            stepV=self.ui.doubleSpinBox_JVstepsize.value()/1000
-            delay=self.ui.doubleSpinBox_JVdelaypoints.value()
+            
             integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
             # NPLC of 1 with 60Hz power, new value every 16.67ms
             # integtime=50ms => NPLC = 50*1/16.67 = 2.999
@@ -784,25 +783,16 @@ class Main(QtWidgets.QMainWindow):
             currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
             nMeas=2
             prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
-            
+            print(scandirections)
             for direction in scandirections:
+                print(direction)
                 if keithleyAddress=='Test':
                     QtTest.QTest.qWait(500)
 
-                forw=direction#0=rev, 1=fwd
-                
-                if not forw:
-                    startV, stopV = maxV, minV
-                    stepV *= -1
-                else:
-                    startV, stopV = minV, maxV
-                
-                volts = np.arange(startV, stopV+stepV, stepV)
-                
-                
-                currentdenlist=[]
-                currentlist=[]
-                voltagelist=[]
+                minV=self.ui.doubleSpinBox_JVminvoltage.value()/1000
+                maxV=self.ui.doubleSpinBox_JVmaxvoltage.value()/1000
+                stepV=self.ui.doubleSpinBox_JVstepsize.value()/1000
+                delay=self.ui.doubleSpinBox_JVdelaypoints.value()
                 
                 if shutteropen:
                     illum='lt'
@@ -810,7 +800,7 @@ class Main(QtWidgets.QMainWindow):
                 else:
                     illum='dk'
                     self.ClearGraph('DIV')
-                
+                print(lastmeasDATA.keys())
                 for sampleitem in lastmeasDATA.keys():
                     pixcoloritem=lastmeasDATA[sampleitem]['pixcolor']
                     if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
@@ -832,6 +822,18 @@ class Main(QtWidgets.QMainWindow):
                     directionstr='fwd'
                 elif direction == 0:#reverse scan
                     directionstr='rev'
+                print(directionstr)
+                forw=direction#0=rev, 1=fwd  
+                if not forw:
+                    startV, stopV = maxV, minV
+                    stepV *= -1
+                else:
+                    startV, stopV = minV, maxV
+                volts = np.arange(startV, stopV+stepV, stepV)
+                currentdenlist=[]
+                currentlist=[]
+                voltagelist=[]
+                print(volts)
                 for step in volts:
                     starttime=datetime.datetime.now()
                     dataCurrent=measureCurrent(keithleyObject,step,nMeas)
