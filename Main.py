@@ -753,8 +753,8 @@ class Main(QtWidgets.QMainWindow):
     def PlotIV(self, keithleyObject, pixels, pixcolorslist, scandirections, Rep):
         global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
         global aftermpp,boxCurrent, boxVoltage, keithleyAddress
-        print('')
-        print(scandirections)
+        # print('')
+        # print(scandirections)
         allpixtobemeasured=''
         for item in range(len(pixels)):
             allpixtobemeasured+=pixels[item]
@@ -786,7 +786,7 @@ class Main(QtWidgets.QMainWindow):
             currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
             nMeas=2
             prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
-            print(scandirections)
+            # print(scandirections)
             for direction in scandirections:
                 print(direction)
                 if keithleyAddress=='Test':
@@ -807,7 +807,7 @@ class Main(QtWidgets.QMainWindow):
                 self.fig3.canvas.draw()
                 plt.show(block=False)
                 
-                print(lastmeasDATA.keys())
+                # print(lastmeasDATA.keys())
                 for sampleitem in lastmeasDATA.keys():
                     pixcoloritem=lastmeasDATA[sampleitem]['pixcolor']
                     if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
@@ -830,7 +830,7 @@ class Main(QtWidgets.QMainWindow):
                     directionstr='fwd'
                 elif direction == 0:#reverse scan
                     directionstr='rev'
-                print(directionstr)
+                # print(directionstr)
                 forw=direction#0=rev, 1=fwd  
                 if not forw:
                     startV, stopV = maxV, minV
@@ -841,7 +841,11 @@ class Main(QtWidgets.QMainWindow):
                 currentdenlist=[]
                 currentlist=[]
                 voltagelist=[]
-                print(volts)
+                # print(volts)
+                
+                line, = self.JVgraph.plot([],'o')
+                lines.append(line)
+                
                 for step in volts:
                     starttime=datetime.datetime.now()
                     dataCurrent=measureCurrent(keithleyObject,step,nMeas)
@@ -867,6 +871,34 @@ class Main(QtWidgets.QMainWindow):
                     # print((datetime.datetime.now()-starttime).microseconds/1000)
                     while (datetime.datetime.now()-starttime).microseconds/1000< (delay+integtime):
                         pass
+                
+                
+                
+                # for step in volts:
+                #     starttime=datetime.datetime.now()
+                #     dataCurrent=measureCurrent(keithleyObject,step,nMeas)
+                #     currentdenlist.append(1000*mean(dataCurrent[:,1])/pixarea)
+                #     currentlist.append(mean(dataCurrent[:,1]))
+                #     voltagelist.append(step)
+                    
+                #     self.JVgraph.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
+                    
+                #     if illum == 'dk':
+                #         self.DIVgraphlin.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
+                #         ydataabs=list(map(lambda x: abs(x),currentdenlist))
+                #         self.DIVgraphlogY.semilogy(voltagelist,ydataabs, 'o',color=pixcolor)
+                #         # self.fig3.canvas.draw_idle()
+                #         self.fig3.canvas.draw()
+                #         self.fig3.canvas.flush_events()
+                    
+                #     # self.fig1.canvas.draw_idle() 
+                #     self.fig1.canvas.draw()
+                #     self.fig1.canvas.flush_events()  
+                    
+                #     # QtTest.QTest.qWait(delay)
+                #     # print((datetime.datetime.now()-starttime).microseconds/1000)
+                #     while (datetime.datetime.now()-starttime).microseconds/1000< (delay+integtime):
+                #         pass
                 
                 if self.ui.radioButton_Assume1sun.isChecked():
                     radioButton_Assume1sun='True'
