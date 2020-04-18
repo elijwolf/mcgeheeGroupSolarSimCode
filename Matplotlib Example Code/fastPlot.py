@@ -1,37 +1,49 @@
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+import datetime
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_title('Title Goes Here.')
 ax.set_xlabel('X Label')
 ax.set_ylabel('Y Label')
-startV = -1
-endV = 1
-stepV = 0.1
-volts = np.arange(startV,endV,stepV)
-voltss = volts**2
-ax.axis([startV,endV,min(voltss),max(voltss)])
+ax.axis([-1,1,-1,1])
+startV1 = -1
+endV1 = 1
+stepV1 = 0.05
+volts1 = np.arange(startV1,endV1+stepV1,stepV1)
+startV2 = 1
+endV2 = 3
+stepV2 = 1
+volts2 = np.arange(startV2,endV2+stepV2,stepV2)
 ax.axhline(color='k')
 ax.axvline(color='k')
-line, = plt.plot([])
+lines = []
+colorList = ['k','b','r']
 fig.canvas.draw() # note that the first draw comes before setting data
-axbackground = fig.canvas.copy_from_bbox(ax.bbox) # cache the background
+legend = plt.legend()
 plt.show(block=False)
+rawDataArrayList = []
+rawDataArray = np.array(([None,None,None,None,None]))
 
-rawDataArray = np.array(([0,0,0,0,0]))
-
-def updatePlot(x,y):
-	line.set_data(x,y)
-	fig.canvas.restore_region(axbackground) # restore background
-	ax.draw_artist(line) # redraw just the points
-	fig.canvas.blit(ax.bbox) # fill in the axes rectangle
-	fig.canvas.flush_events()
-
-for volt in volts:
-	rawData = [volt, volt**2, volt**3, volt**4, volt**5]
-	rawDataArray = np.vstack((rawDataArray,rawData))
-	x = rawDataArray[:,0]
-	y = rawDataArray[:,1]
-	updatePlot(x,y)
+start = datetime.datetime.now()
+for idx, volt2 in enumerate(volts2):
+	line, = plt.plot([],'x', label = volt2)
+	lines.append(line)
+	legend.remove()
+	legend = plt.legend()
+	rawDataArray = np.array(([None,None,None,None,None]))
+	for volt1 in volts1:
+		rawData = [volt1, volt1**volt2, 2*volt1**volt2, 3*volt1**volt2, 4*volt1**volt2] #This matches the output format of the measureCurrent function. [voltage, current, resistance, time, status]
+		rawDataArray = np.vstack((rawDataArray,rawData))
+		x = rawDataArray[:,0]
+		y = rawDataArray[:,1]
+		# plt.plot(x,y, 'x', color = colorList[idx]) # This is about 50% slower than set_data
+		lines[idx].set_data(x,y)
+		fig.canvas.draw()
+		fig.canvas.flush_events()
+	rawDataArrayList.append(rawDataArray)
+end = datetime.datetime.now()
+diff = end-start
+print (diff.total_seconds())

@@ -1371,8 +1371,8 @@ class Window(QtWidgets.QDialog):
         from pixelControl import connectPixel 
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'Advantech Code'))
         import pyDAQNavi as pDN
-        boxCurrent = pDN.DeviceObject('USB-4761,BID#0')
-        boxVoltage = pDN.DeviceObject('USB-4761,BID#1')
+        boxCurrent = pDN.DeviceObject('DemoDevice,BID#0')
+        boxVoltage = pDN.DeviceObject('DemoDevice,BID#1')
         keithleyAddress='GPIB0::22::INSTR'   
 
         self.w = Main()
