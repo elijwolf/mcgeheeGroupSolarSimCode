@@ -774,12 +774,14 @@ class Main(QtWidgets.QMainWindow):
             pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
             pixcolor=pixcolorslist[item]
             
-            integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
+            integtime=self.ui.doubleSpinBox_JVintegrationtime.value()/1000
             # NPLC of 1 with 60Hz power, new value every 16.67ms
-            # integtime=50ms => NPLC = 50*1/16.67 = 2.999
-            NPLC=integtime/16.67
+            # integtime=50ms => NPLC = .050*60 = 3
+            NPLC=integtime*60
             if NPLC>10:
                 NPLC=10
+            if NPLC<0.01:
+                NPLC=0.01
             currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
             nMeas=2
             prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
