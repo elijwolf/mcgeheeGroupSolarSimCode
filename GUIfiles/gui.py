@@ -433,7 +433,7 @@ class Ui_MainWindow(object):
         self.gridLayout_5.addWidget(self.label_23, 4, 0, 1, 3)
         self.doubleSpinBox_MPPTdelaypoints = QtWidgets.QDoubleSpinBox(self.groupBox_MPPTParam)
         self.doubleSpinBox_MPPTdelaypoints.setDecimals(0)
-        self.doubleSpinBox_MPPTdelaypoints.setMaximum(1000.0)
+        self.doubleSpinBox_MPPTdelaypoints.setMaximum(9999999.0)
         self.doubleSpinBox_MPPTdelaypoints.setProperty("value", 50.0)
         self.doubleSpinBox_MPPTdelaypoints.setObjectName("doubleSpinBox_MPPTdelaypoints")
         self.gridLayout_5.addWidget(self.doubleSpinBox_MPPTdelaypoints, 4, 3, 1, 1)
