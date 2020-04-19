@@ -136,8 +136,10 @@ def SaveParamTemplate(self):
         radioButton_Assume1sun='True'
     else:
         radioButton_Assume1sun='False'
+        
+    directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'ExamplesTemplateFiles')
     
-    fname = QFileDialog.getSaveFileName(self, 'Save file', 'c:\\',"Text files (*.txt)")
+    fname = QFileDialog.getSaveFileName(self, 'Save file', directory,"Text files (*.txt)")
     with open(fname[0],'w') as file:
         text='UserName\t'+ str(self.ui.lineEdit_UserName.text())+'\n'+\
             'SampleName\t'+ str(self.ui.lineEdit_SampleName.text())+'\n'+\

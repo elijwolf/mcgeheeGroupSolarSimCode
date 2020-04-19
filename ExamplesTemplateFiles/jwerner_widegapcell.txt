@@ -2,27 +2,26 @@ UserName	jwerner
 SampleName	100_01
 Comment	_aftermpp
 Meas. type	LIV
-WhichPixel	All
 #rep	1
 DelayRep	10
 
 Diode1sun	0.0014
-temperature	25
+temperature	25.0
 assume1sun	True
 
-minvoltage	-200
-maxvoltage	1200
-JVstepsize	20
+minvoltage	-200.0
+maxvoltage	1200.0
+JVstepsize	20.0
 currentlimit	0.1
-integtime	50
-delaypoints	50
-delayshutter	100
-scandirection	Reverse + forward
+integtime	50.0
+delaypoints	100.0
+delayshutter	100.0
+scandirection	Reverse + Forward
 
-startvoltage	500
+startvoltage	500.0
 MPPTstepsize	5
-voltagelimit	2000
-delaypointsmpp	50
+voltagelimit	2000.0
+delaypointsmpp	50.0
 lighton	True
 keeplightafter	True
 

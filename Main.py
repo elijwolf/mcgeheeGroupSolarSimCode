@@ -262,9 +262,9 @@ class Main(QtWidgets.QMainWindow):
         for sample in sampleselected:
             direction=AllDATA[sample]['ScanDirection']
             if direction == 'fwd':#forward scan
-                self.JVgraph.plot(AllDATA[sample]['Voltage'],AllDATA[sample]['CurrentDensity'], linestyle="dashed",label=AllDATA[sample]['SampleNamePix'])
+                self.JVgraph.plot(AllDATA[sample]['Voltage'],AllDATA[sample]['CurrentDensity'], linestyle="dashed",label=AllDATA[sample]['SampleNamePix']+'_'+direction)
             elif direction == 'rev':#reverse scan
-                self.JVgraph.plot(AllDATA[sample]['Voltage'],AllDATA[sample]['CurrentDensity'], linestyle="solid",label=AllDATA[sample]['SampleNamePix'])
+                self.JVgraph.plot(AllDATA[sample]['Voltage'],AllDATA[sample]['CurrentDensity'], linestyle="solid",label=AllDATA[sample]['SampleNamePix']+'_'+direction)
         self.JVgraph.legend()
         self.fig1.canvas.draw_idle()
         self.fig1.canvas.flush_events()
@@ -731,7 +731,7 @@ class Main(QtWidgets.QMainWindow):
             else:
                 Batch='None'
                 Substrate='None' 
-            AlltrackingDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ pixels[item] +'_'+trackingtype, 
+            AlltrackingDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ pixels[item], 
                                      'linktorawdata':str(os.path.join(str(directory),sample+'.txt')),'SampleName': samplename,'Batch#':Batch,'Substrate#':Substrate,'Pixel':pixels[item],'Allpixs':allpixtobemeasured,
                                      'illum': illum, 'Sunintensity': Sunintensity, 'IsRefDiodeMeasured': RefDiodeChecked, 
                                      'RefDiodeNomCurr':self.ui.doubleSpinBox_DiodeNominalCurrent.value(),
@@ -789,7 +789,8 @@ class Main(QtWidgets.QMainWindow):
             prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
             # print(scandirections)
             for direction in scandirections:
-                print(direction)
+                # print(direction)
+                # startIVtime=datetime.datetime.now()
                 if keithleyAddress=='Test':
                     QtTest.QTest.qWait(500)
 
@@ -804,9 +805,9 @@ class Main(QtWidgets.QMainWindow):
                 else:
                     illum='dk'
                     self.ClearGraph('DIV')
-                self.fig1.canvas.draw()
-                self.fig3.canvas.draw()
-                plt.show(block=False)
+                # self.fig1.canvas.draw()
+                # self.fig3.canvas.draw()
+                # plt.show(block=False)
                 
                 # print(lastmeasDATA.keys())
                 for sampleitem in lastmeasDATA.keys():
@@ -825,19 +826,18 @@ class Main(QtWidgets.QMainWindow):
                             self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="dashed",color=pixcoloritem)
                         else:#reverse scan
                             self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="solid",color=pixcoloritem)
-                
+                self.fig1.canvas.draw()
+                self.fig3.canvas.draw()
                 
                 if direction == 1:#forward scan
                     directionstr='fwd'
+                    startV, stopV = minV, maxV
                 elif direction == 0:#reverse scan
                     directionstr='rev'
-                # print(directionstr)
-                forw=direction#0=rev, 1=fwd  
-                if not forw:
                     startV, stopV = maxV, minV
                     stepV *= -1
-                else:
-                    startV, stopV = minV, maxV
+                forw=direction#0=rev, 1=fwd  
+                
                 volts = np.arange(startV, stopV+stepV, stepV)
                 currentdenlist=[]
                 currentlist=[]
@@ -878,8 +878,8 @@ class Main(QtWidgets.QMainWindow):
                 #     while (datetime.datetime.now()-starttime).microseconds/1000< (delay+integtime):
                 #         pass
                 
-                
-                
+                # print((datetime.datetime.now()-startIVtime).microseconds/1000)
+                # startIVtime=datetime.datetime.now()
                 for step in volts:
                     starttime=datetime.datetime.now()
                     dataCurrent=measureCurrent(keithleyObject,step,nMeas)
@@ -889,13 +889,13 @@ class Main(QtWidgets.QMainWindow):
                     
                     self.JVgraph.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
                     
-                    if illum == 'dk':
-                        self.DIVgraphlin.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
-                        ydataabs=list(map(lambda x: abs(x),currentdenlist))
-                        self.DIVgraphlogY.semilogy(voltagelist,ydataabs, 'o',color=pixcolor)
-                        # self.fig3.canvas.draw_idle()
-                        self.fig3.canvas.draw()
-                        self.fig3.canvas.flush_events()
+                    # if illum == 'dk':
+                    #     self.DIVgraphlin.plot(voltagelist,currentdenlist, 'o',color=pixcolor)
+                    #     ydataabs=list(map(lambda x: abs(x),currentdenlist))
+                    #     self.DIVgraphlogY.semilogy(voltagelist,ydataabs, 'o',color=pixcolor)
+                    #     # self.fig3.canvas.draw_idle()
+                    #     self.fig3.canvas.draw()
+                    #     self.fig3.canvas.flush_events()
                     
                     # self.fig1.canvas.draw_idle() 
                     self.fig1.canvas.draw()
@@ -905,7 +905,8 @@ class Main(QtWidgets.QMainWindow):
                     # print((datetime.datetime.now()-starttime).microseconds/1000)
                     while (datetime.datetime.now()-starttime).microseconds/1000< (delay+integtime):
                         pass
-                
+                # print((datetime.datetime.now()-startIVtime).microseconds/1000)
+                # startIVtime=datetime.datetime.now()
                 if self.ui.radioButton_Assume1sun.isChecked():
                     radioButton_Assume1sun='True'
                 else:
@@ -927,7 +928,7 @@ class Main(QtWidgets.QMainWindow):
                     if 'aftermpp' not in commenttext:
                         commenttext+='_aftermpp'
                 
-                AllDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ pixels[item] +'_'+ directionstr, 
+                AllDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ pixels[item], 
                                  'linktorawdata':str(os.path.join(str(directory),sample+'.txt')),'SampleName': samplename,'Batch#':Batch,'Substrate#':Substrate, 'Pixel':pixels[item], 'Allpixs':allpixtobemeasured,
                                  'ScanDirection': directionstr, 'illum': illum, 'Sunintensity': Sunintensity, 'IsRefDiodeMeasured': RefDiodeChecked, 
                                  'RefDiodeNomCurr':self.ui.doubleSpinBox_DiodeNominalCurrent.value(),'RefDiodeMeasCurr':self.ui.doubleSpinBox_MeasuredDiodeCurrent.value(),
@@ -946,7 +947,7 @@ class Main(QtWidgets.QMainWindow):
                 self.AnalysisJV(sample)
                 self.Savedata(sample,AllDATA)
                 self.UpdateTable(lastmeasDATA)
-                
+                # print((datetime.datetime.now()-startIVtime).microseconds/1000)
                 if STOPMEAS==1:
                     break
             if STOPMEAS==1:
@@ -1146,7 +1147,7 @@ class Main(QtWidgets.QMainWindow):
                 JVmeas_id_exists = self.theCursor.fetchone()
                 if JVmeas_id_exists==None:
                     self.theCursor.execute("INSERT INTO JVmeas (DateTimeJV, Eff, Voc,Jsc,Isc, FF, Vmpp, Jmpp,Pmpp,Roc,Rsc,ScanDirect,Delay, DelayShutter,IntegTime,Vmin,Vmax,MeasType,MeasNowType,StepSize,CurrentLimit,LightDark,IlluminationIntensity,commentJV,MeasurementLongName,SampleNamePix,linktorawdata,aftermpp,samples_id,batch_id,cells_id,Refdiod_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                                    (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate),DATA[sample]['Eff'],DATA[sample]['Voc'],DATA[sample]['Jsc'],
+                                    (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate).replace('T','-').replace(':','-') ,DATA[sample]['Eff'],DATA[sample]['Voc'],DATA[sample]['Jsc'],
                                      DATA[sample]['Isc'],DATA[sample]['FF'],DATA[sample]['Vmpp'],DATA[sample]['Jmpp'],
                                      DATA[sample]['Pmpp'],DATA[sample]['Roc'],DATA[sample]['Rsc'],DATA[sample]['ScanDirection'],
                                      DATA[sample]['Delaypts'],DATA[sample]['DelayShutter'],DATA[sample]['IntegTime'],DATA[sample]['MinVoltage'],
@@ -1162,12 +1163,12 @@ class Main(QtWidgets.QMainWindow):
                 self.theCursor.execute("SELECT id FROM MPPmeas WHERE MeasurementLongName =? AND cells_id =? AND samples_id =? AND batch_id =?",(DATA[sample]['sampleID'],cells_id_exists,samples_id_exists,batch_id_exists,))
                 MPPmeas_id_exists = self.theCursor.fetchone()
                 if MPPmeas_id_exists==None:
-                    self.theCursor.execute("INSERT INTO MPPmeas (DateTimeMPP,TrackingAlgo,MeasType,MeasNowType,TrackingDuration,Vstart,Vstep,Delay,PowerEnd,commentmpp,LightDark,IlluminationIntensity,MeasurementLongName,SampleNamePix,linktorawdata,samples_id,batch_id, cells_id,Refdiod_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                                    (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate),'perturbe&observe',DATA[sample]['MeasType'],DATA[sample]['MeasNowType'],
+                    self.theCursor.execute("INSERT INTO MPPmeas (DateTimeMPP,TrackingAlgo,MeasType,MeasNowType,TrackingDuration,Vstart,Vstep,Delay,PowerEnd,commentmpp,LightDark,IlluminationIntensity,MeasurementLongName,SampleNamePix,linktorawdata,samples_id,batch_id, cells_id,Refdiod_id,PowerEnd) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                    (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate).replace('T','-').replace(':','-'),'perturbe&observe',DATA[sample]['MeasType'],DATA[sample]['MeasNowType'],
                                      DATA[sample]['trackingtime'],DATA[sample]['InitialVoltage'],DATA[sample]['initialstep'],DATA[sample]['initialdelay'],
                                      DATA[sample]['power'][-1],DATA[sample]['Comment'],DATA[sample]['illum'],
                                      DATA[sample]['Sunintensity'],DATA[sample]['sampleID'],DATA[sample]['SampleNamePix'],DATA[sample]['linktorawdata'],
-                                     samples_id_exists,batch_id_exists,cells_id_exists,refdiode_id_exists,))
+                                     samples_id_exists,batch_id_exists,cells_id_exists,refdiode_id_exists,DATA[sample]['power'][-1],))
                     MPPmeas_id_exists=self.theCursor.lastrowid
                 else:
                     MPPmeas_id_exists=MPPmeas_id_exists[0]

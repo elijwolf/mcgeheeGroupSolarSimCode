@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1124</width>
-    <height>755</height>
+    <height>840</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -225,214 +225,6 @@
            <enum>QFrame::Raised</enum>
           </property>
           <layout class="QGridLayout" name="gridLayout_7">
-           <item row="1" column="0" colspan="3">
-            <widget class="QGroupBox" name="groupBox_Measurement">
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="Base">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>255</red>
-                   <green>255</green>
-                   <blue>255</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-                <colorrole role="Window">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>177</red>
-                   <green>177</green>
-                   <blue>177</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="Base">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>255</red>
-                   <green>255</green>
-                   <blue>255</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-                <colorrole role="Window">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>177</red>
-                   <green>177</green>
-                   <blue>177</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="Base">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>177</red>
-                   <green>177</green>
-                   <blue>177</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-                <colorrole role="Window">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>177</red>
-                   <green>177</green>
-                   <blue>177</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="cursor">
-              <cursorShape>ArrowCursor</cursorShape>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="title">
-              <string>Measurement</string>
-             </property>
-             <property name="flat">
-              <bool>false</bool>
-             </property>
-             <property name="checkable">
-              <bool>false</bool>
-             </property>
-             <layout class="QGridLayout" name="gridLayout_4">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_4">
-                <property name="text">
-                 <string>Meas. type</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1" colspan="2">
-               <widget class="QComboBox" name="comboBox_MeasType">
-                <item>
-                 <property name="text">
-                  <string>LIV</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>DIV</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>DIV-LIV</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>MPPT</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>LIV-MPPT-LIV</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>LIV-bestpixMPPT-LIV</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>DIV-LIV-MPPT-LIV</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>DIV-LIV-bestpixMPPT-LIV</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>FixedVoltage</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>FixedCurrent</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-              <item row="0" column="3" colspan="2">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string># of repetitions of sequence</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="5">
-               <widget class="QSpinBox" name="spinBox_RepNumb">
-                <property name="minimum">
-                 <number>0</number>
-                </property>
-                <property name="value">
-                 <number>1</number>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="3" colspan="2">
-               <widget class="QLabel" name="label_7">
-                <property name="text">
-                 <string>Delay between rep. (ms)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="5">
-               <widget class="QSpinBox" name="spinBox_RepDelay">
-                <property name="maximum">
-                 <number>10000</number>
-                </property>
-                <property name="value">
-                 <number>10</number>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="2">
-               <widget class="QPushButton" name="pushButton_StopMeas">
-                <property name="text">
-                 <string>Stop Meas. Sequence</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="3">
-               <widget class="QPushButton" name="pushButton_StopMppt">
-                <property name="text">
-                 <string>Stop only MPPT</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="4" colspan="2">
-               <widget class="QPushButton" name="pushButton_OpenCloseShutter">
-                <property name="text">
-                 <string>Open/Close shutter</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0" colspan="2">
-               <widget class="QPushButton" name="pushButton_StartMeas">
-                <property name="text">
-                 <string>Start Measurement</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
            <item row="2" column="0" colspan="2">
             <widget class="QGroupBox" name="groupBox_CheckIntensity">
              <property name="palette">
@@ -694,10 +486,10 @@
               <bool>false</bool>
              </property>
              <layout class="QGridLayout" name="gridLayout">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_13">
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_15">
                 <property name="text">
-                 <string>Min. voltage (mV):</string>
+                 <string>Step size (mV):</string>
                 </property>
                </widget>
               </item>
@@ -714,6 +506,104 @@
                 </property>
                 <property name="value">
                  <double>-200.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="label_24">
+                <property name="text">
+                 <string>Integration time (ms):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>Min. voltage (mV):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_18">
+                <property name="text">
+                 <string>Delay after shutter move:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QDoubleSpinBox" name="doubleSpinBox_JVdelaypoints">
+                <property name="decimals">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <double>10000.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>50.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QComboBox" name="comboBox_JVscandirection">
+                <item>
+                 <property name="text">
+                  <string>Reverse + Forward</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Forward + Reverse</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Reverse</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Forward</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="doubleSpinBox_JVstepsize">
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <double>1000.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>20.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string>Current limit (A):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="label_17">
+                <property name="text">
+                 <string>Delay between steps (ms):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QDoubleSpinBox" name="doubleSpinBox_JVdelayshutter">
+                <property name="decimals">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <double>10000.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>100.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -740,30 +630,10 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="label_15">
+              <item row="7" column="0">
+               <widget class="QLabel" name="label_19">
                 <property name="text">
-                 <string>Step size (mV):</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QDoubleSpinBox" name="doubleSpinBox_JVstepsize">
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <double>1000.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>20.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QLabel" name="label_16">
-                <property name="text">
-                 <string>Current limit (A):</string>
+                 <string>Scan direction:</string>
                 </property>
                </widget>
               </item>
@@ -774,13 +644,6 @@
                 </property>
                 <property name="value">
                  <double>100.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0">
-               <widget class="QLabel" name="label_24">
-                <property name="text">
-                 <string>Integration time (ms):</string>
                 </property>
                </widget>
               </item>
@@ -795,77 +658,6 @@
                 <property name="value">
                  <double>50.000000000000000</double>
                 </property>
-               </widget>
-              </item>
-              <item row="5" column="0">
-               <widget class="QLabel" name="label_17">
-                <property name="text">
-                 <string>Delay between steps (ms):</string>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="1">
-               <widget class="QDoubleSpinBox" name="doubleSpinBox_JVdelaypoints">
-                <property name="decimals">
-                 <number>0</number>
-                </property>
-                <property name="maximum">
-                 <double>10000.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>50.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="0">
-               <widget class="QLabel" name="label_18">
-                <property name="text">
-                 <string>Delay after shutter move:</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="1">
-               <widget class="QDoubleSpinBox" name="doubleSpinBox_JVdelayshutter">
-                <property name="decimals">
-                 <number>0</number>
-                </property>
-                <property name="maximum">
-                 <double>10000.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>100.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="7" column="0">
-               <widget class="QLabel" name="label_19">
-                <property name="text">
-                 <string>Scan direction:</string>
-                </property>
-               </widget>
-              </item>
-              <item row="7" column="1">
-               <widget class="QComboBox" name="comboBox_JVscandirection">
-                <item>
-                 <property name="text">
-                  <string>Reverse + Forward</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Forward + Reverse</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Reverse</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Forward</string>
-                 </property>
-                </item>
                </widget>
               </item>
              </layout>
@@ -1158,6 +950,9 @@
                 </property>
                </widget>
               </item>
+              <item row="0" column="3">
+               <widget class="QLineEdit" name="lineEdit_SampleName"/>
+              </item>
               <item row="0" column="2">
                <widget class="QLabel" name="label_2">
                 <property name="text">
@@ -1171,9 +966,6 @@
                  <string>UserName</string>
                 </property>
                </widget>
-              </item>
-              <item row="0" column="3">
-               <widget class="QLineEdit" name="lineEdit_SampleName"/>
               </item>
               <item row="1" column="1" colspan="3">
                <widget class="QLineEdit" name="lineEdit_Comment"/>
@@ -1567,151 +1359,284 @@
              </layout>
             </widget>
            </item>
+           <item row="1" column="0" colspan="3">
+            <widget class="QGroupBox" name="groupBox_Measurement">
+             <property name="palette">
+              <palette>
+               <active>
+                <colorrole role="Base">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>255</red>
+                   <green>255</green>
+                   <blue>255</blue>
+                  </color>
+                 </brush>
+                </colorrole>
+                <colorrole role="Window">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>177</red>
+                   <green>177</green>
+                   <blue>177</blue>
+                  </color>
+                 </brush>
+                </colorrole>
+               </active>
+               <inactive>
+                <colorrole role="Base">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>255</red>
+                   <green>255</green>
+                   <blue>255</blue>
+                  </color>
+                 </brush>
+                </colorrole>
+                <colorrole role="Window">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>177</red>
+                   <green>177</green>
+                   <blue>177</blue>
+                  </color>
+                 </brush>
+                </colorrole>
+               </inactive>
+               <disabled>
+                <colorrole role="Base">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>177</red>
+                   <green>177</green>
+                   <blue>177</blue>
+                  </color>
+                 </brush>
+                </colorrole>
+                <colorrole role="Window">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>177</red>
+                   <green>177</green>
+                   <blue>177</blue>
+                  </color>
+                 </brush>
+                </colorrole>
+               </disabled>
+              </palette>
+             </property>
+             <property name="cursor">
+              <cursorShape>ArrowCursor</cursorShape>
+             </property>
+             <property name="autoFillBackground">
+              <bool>true</bool>
+             </property>
+             <property name="title">
+              <string>Measurement</string>
+             </property>
+             <property name="flat">
+              <bool>false</bool>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_18">
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Meas. type</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2" colspan="2">
+               <widget class="QComboBox" name="comboBox_MeasType">
+                <item>
+                 <property name="text">
+                  <string>LIV</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>DIV</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>DIV-LIV</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>MPPT</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>LIV-MPPT-LIV</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>LIV-bestpixMPPT-LIV</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>DIV-LIV-MPPT-LIV</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>DIV-LIV-bestpixMPPT-LIV</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>FixedVoltage</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>FixedCurrent</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="1" column="1" colspan="2">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string># of repetitions of sequence</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QSpinBox" name="spinBox_RepNumb">
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="value">
+                 <number>1</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1" colspan="2">
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>Delay between rep. (ms)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QSpinBox" name="spinBox_RepDelay">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+                <property name="value">
+                 <number>10</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0" rowspan="3">
+               <widget class="QTabWidget" name="tabWidget_3">
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
+                <widget class="QWidget" name="tab_6">
+                 <attribute name="title">
+                  <string>Meas.</string>
+                 </attribute>
+                 <layout class="QGridLayout" name="gridLayout_4">
+                  <item row="0" column="0">
+                   <widget class="QPushButton" name="pushButton_StartMeas">
+                    <property name="text">
+                     <string>Start Measurement</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QPushButton" name="pushButton_StopMeas">
+                    <property name="text">
+                     <string>Stop Meas. Sequence</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QPushButton" name="pushButton_OpenCloseShutter">
+                    <property name="text">
+                     <string>Open/Close shutter</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QPushButton" name="pushButton_StopMppt">
+                    <property name="text">
+                     <string>Stop only MPPT</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="tab_7">
+                 <attribute name="title">
+                  <string>Clear/Plot</string>
+                 </attribute>
+                 <layout class="QGridLayout" name="gridLayout_17">
+                  <item row="0" column="0">
+                   <widget class="QPushButton" name="pushButton_PlotfromTable">
+                    <property name="text">
+                     <string>Plot only selected data from Table</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QPushButton" name="pushButton_cleargraph">
+                    <property name="text">
+                     <string>Clear graph</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QPushButton" name="pushButton_LoadAllDATAinTable">
+                    <property name="text">
+                     <string>Load all data of the session in Table</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QComboBox" name="comboBox_cleargraph">
+                    <item>
+                     <property name="text">
+                      <string>LIV</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>MPPT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>DIV</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QPushButton" name="pushButton_exportgraphandfile">
+                    <property name="text">
+                     <string>Export graph with txt rawdata files</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
           </layout>
          </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_2">
-       <attribute name="title">
-        <string>Extra plot options</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_13">
-        <item row="3" column="3" colspan="2">
-         <widget class="QPushButton" name="pushButton_exportgraphandfile">
-          <property name="text">
-           <string>Export graph with txt rawdata files</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="2">
-         <widget class="QPushButton" name="pushButton_LoadAllDATAinTable">
-          <property name="text">
-           <string>Load all data of the session in Table</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="2">
-         <widget class="QPushButton" name="pushButton_PlotfromTable">
-          <property name="text">
-           <string>Plot only selected data from Table</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="4">
-         <widget class="QComboBox" name="comboBox_cleargraph">
-          <item>
-           <property name="text">
-            <string>LIV</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>MPPT</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>DIV</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="4" column="0" colspan="5">
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>76</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="2" column="3">
-         <widget class="QPushButton" name="pushButton_cleargraph">
-          <property name="text">
-           <string>Clear graph</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="5" column="0">
-         <widget class="QFrame" name="frame_2">
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_14"/>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="0" column="0" colspan="5">
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>76</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="2" column="5">
-         <spacer name="horizontalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="3" column="5">
-         <spacer name="horizontalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </widget>
@@ -1719,100 +1644,116 @@
        <attribute name="title">
         <string>Database Reading</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_17">
-        <item row="0" column="1">
-         <spacer name="verticalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
+       <layout class="QGridLayout" name="gridLayout_16">
+        <item row="0" column="0">
+         <widget class="QTabWidget" name="tabWidget_2">
+          <property name="enabled">
+           <bool>true</bool>
           </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Preferred</enum>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>50</height>
-           </size>
+          <property name="currentIndex">
+           <number>0</number>
           </property>
-         </spacer>
-        </item>
-        <item row="1" column="1">
-         <widget class="QPushButton" name="pushButton_DBread">
-          <property name="text">
-           <string>Reading DB</string>
-          </property>
+          <widget class="QWidget" name="tab_4">
+           <attribute name="title">
+            <string>Time Evol</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_15">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>Time</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="label_25">
+              <property name="text">
+               <string>y-axis</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QComboBox" name="comboBox_DBTime"/>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="comboBox_DBTimeYaxis"/>
+            </item>
+            <item row="1" column="4">
+             <widget class="QPushButton" name="pushButton_DBTime_remove">
+              <property name="text">
+               <string>Remove restriction</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0" rowspan="6" colspan="2">
+             <widget class="QListWidget" name="listWidget_DBTime_Restrictions"/>
+            </item>
+            <item row="2" column="2">
+             <widget class="QLabel" name="label_26">
+              <property name="text">
+               <string>Restriction</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QPushButton" name="pushButton_DBTime_Add">
+              <property name="text">
+               <string>Add</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="4" rowspan="6">
+             <widget class="QListWidget" name="listWidget_DBTime_chosenRestrictions"/>
+            </item>
+            <item row="3" column="2" colspan="2">
+             <widget class="QComboBox" name="comboBox_DBTime_restrictions"/>
+            </item>
+            <item row="4" column="2">
+             <widget class="QLabel" name="label_27">
+              <property name="text">
+               <string>From</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="2" colspan="2">
+             <widget class="QLineEdit" name="lineEdit_DBTime_From"/>
+            </item>
+            <item row="6" column="2">
+             <widget class="QLabel" name="label_28">
+              <property name="text">
+               <string>To</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="2" colspan="2">
+             <widget class="QLineEdit" name="lineEdit_DBTime_To"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_5">
+           <attribute name="title">
+            <string>BoxPlots</string>
+           </attribute>
+          </widget>
          </widget>
-        </item>
-        <item row="2" column="1">
-         <spacer name="verticalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Preferred</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>50</height>
-           </size>
-          </property>
-         </spacer>
         </item>
         <item row="1" column="0">
-         <spacer name="horizontalSpacer_5">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="1" column="2">
-         <spacer name="horizontalSpacer_6">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="4" column="0" colspan="3">
-         <widget class="QWidget" name="MPLwidget_DB1" native="true">
+         <widget class="QWidget" name="widget_DB" native="true">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <layout class="QGridLayout" name="gridLayout_15"/>
-         </widget>
-        </item>
-        <item row="5" column="0" colspan="3">
-         <widget class="QWidget" name="MPLwidget_DB2" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_16"/>
          </widget>
         </item>
        </layout>
-      </widget>
-      <widget class="QWidget" name="tab_4">
-       <attribute name="title">
-        <string>Data Analysis</string>
-       </attribute>
       </widget>
      </widget>
     </item>
@@ -1857,6 +1798,38 @@
  <resources/>
  <connections>
   <connection>
+   <sender>radioButton_pixAll</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_pixC</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>372</x>
+     <y>678</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>372</x>
+     <y>607</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_pixAll</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_pixD</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>372</x>
+     <y>678</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>504</x>
+     <y>607</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>horizontalSlider_MPPTstepsize</sender>
    <signal>valueChanged(int)</signal>
    <receiver>spinBox_MPPTstepsize</receiver>
@@ -1869,6 +1842,54 @@
     <hint type="destinationlabel">
      <x>291</x>
      <y>589</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_pixAll</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_pixA</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>372</x>
+     <y>678</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>372</x>
+     <y>571</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_pixAll</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_pixB</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>372</x>
+     <y>678</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>504</x>
+     <y>571</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_pixAll</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_pixE</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>372</x>
+     <y>678</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>372</x>
+     <y>643</y>
     </hint>
    </hints>
   </connection>
@@ -1901,86 +1922,6 @@
     <hint type="destinationlabel">
      <x>504</x>
      <y>643</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButton_pixAll</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>checkBox_pixE</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>372</x>
-     <y>678</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>372</x>
-     <y>643</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButton_pixAll</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>checkBox_pixD</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>372</x>
-     <y>678</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>504</x>
-     <y>607</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButton_pixAll</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>checkBox_pixC</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>372</x>
-     <y>678</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>372</x>
-     <y>607</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButton_pixAll</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>checkBox_pixB</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>372</x>
-     <y>678</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>504</x>
-     <y>571</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButton_pixAll</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>checkBox_pixA</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>372</x>
-     <y>678</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>372</x>
-     <y>571</y>
     </hint>
    </hints>
   </connection>

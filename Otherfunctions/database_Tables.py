@@ -39,7 +39,7 @@ def CreateAllTables(db_conn):
     try:
         theCursor.execute("""CREATE TABLE IF NOT EXISTS samples(
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                samplename TEXT NOT NULL UNIQUE,
+                samplename TEXT NOT NULL,
                 batch_id INTEGER,
                 FOREIGN KEY(batch_id) REFERENCES batch(id) ON DELETE CASCADE
                 );""")
