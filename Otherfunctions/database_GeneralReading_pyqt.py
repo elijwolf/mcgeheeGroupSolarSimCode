@@ -45,10 +45,10 @@ parameterList=[]
 tablesAndcolnames=[]
 SetallcolnamesWOids=[]
 criteriaList=[]
-criteriaexclusionlist=['JVmeas.commentJV','JVmeas.linktorawdata','JVmeas.SampleNamePix','JVmeas.MeasurementLongName',
+criteriaexclusionlist=['JVmeas.commentJV','JVmeas.linktorawdata',
                        'MPPmeas.commentmpp', 'MPPmeas.linktorawdata'] #cannot restrict search from those criteria
 
-dropdowncriteria=['batch.batchname','users.user','samples.samplename',
+dropdowncriteria=['batch.batchname','users.user','samples.samplename','JVmeas.SampleNamePix','JVmeas.MeasurementLongName',
                   'cells.cellname','cells.AllpixSeq','pixelarea.pixel_area',
                   'JVmeas.ScanDirect','JVmeas.MeasType','JVmeas.MeasNowType',
                   'JVmeas.LightDark', 'JVmeas.aftermpp','Refdiode.IsRefDiodeMeasured',

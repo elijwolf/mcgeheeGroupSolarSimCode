@@ -732,6 +732,8 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.widget_DB.sizePolicy().hasHeightForWidth())
         self.widget_DB.setSizePolicy(sizePolicy)
         self.widget_DB.setObjectName("widget_DB")
+        self.gridLayout_mplDB = QtWidgets.QGridLayout(self.widget_DB)
+        self.gridLayout_mplDB.setObjectName("gridLayout_mplDB")
         self.gridLayout_16.addWidget(self.widget_DB, 1, 0, 1, 1)
         self.tabWidget.addTab(self.tab_3, "")
         self.gridLayout_8.addWidget(self.tabWidget, 0, 0, 4, 1)

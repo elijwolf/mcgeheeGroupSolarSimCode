@@ -31,6 +31,7 @@ from myKeithleyFunctions import connectToKeithley, prepareVoltage, measureVoltag
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'Otherfunctions'))
 from database_Tables import CreateAllTables
+import database_GeneralReading_pyqt as DBreadPack
 
 #%%######################################################################################################
 shutteropen=0
@@ -83,6 +84,8 @@ class Main(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         LoadParamTemplate(self)
         self.keithleyObject=connectToKeithley(keithleyAddress)
+        
+        self.connecttoDB()
  
         finish = QAction("Quit", self)
         finish.triggered.connect(lambda: self.closeEvent(self.keithleyObject))
@@ -125,8 +128,16 @@ class Main(QtWidgets.QMainWindow):
         self.DIVgraphlogY.set_ylabel('Current density (mA/cm'+'\xb2'+')')
         self.addmpl(self.fig3,self.ui.gridLayout_MPLwidgetDIV,self.ui.MPLwidgetDIV)
 
+        self.fig4 = Figure()
+        self.DBgraph = self.fig4.add_subplot(111)
+        self.DBgraph.set_xlabel('Time (s)')
+        self.DBgraph.set_ylabel('X (-)')
+        # self.DBgraph.axhline(y=0, color='k')
+        # self.DBgraph.axvline(x=0, color='k')
+        self.addmpl(self.fig4,self.ui.gridLayout_mplDB, self.ui.widget_DB)
+
         
-        for item0 in [self.DIVgraphlin,self.DIVgraphlogY,self.JVgraph,self.MPPTgraph_JV,self.MPPTgraph_TV,self.MPPTgraph_TJ,self.MPPTgraph_TP]:
+        for item0 in [self.DIVgraphlin,self.DIVgraphlogY,self.DBgraph,self.JVgraph,self.MPPTgraph_JV,self.MPPTgraph_TV,self.MPPTgraph_TJ,self.MPPTgraph_TP]:
             for item in ([item0.title, item0.xaxis.label, item0.yaxis.label] +
                          item0.get_xticklabels() + item0.get_yticklabels()):
                 item.set_fontsize(12)
@@ -153,6 +164,16 @@ class Main(QtWidgets.QMainWindow):
         
         self.ui.comboBox_MeasType.currentTextChanged.connect(self.on_combobox_changed)
         
+        self.ui.tabWidget.currentChanged.connect(self.onclickDBtab)
+        
+        self.ui.comboBox_DBTime.currentTextChanged.connect(self.on_combobox_DBTime_changed)
+        self.ui.comboBox_DBTimeYaxis.currentTextChanged.connect(self.SearchAndPlot)
+        self.ui.comboBox_DBTime_restrictions.currentTextChanged.connect(self.on_combobox_DBTimeRestrictions_changed)
+        self.ui.pushButton_DBTime_Add.clicked.connect(self.Addrestriction)
+        self.ui.pushButton_DBTime_remove.clicked.connect(self.Removerestriction)
+        
+        
+        
     def closeEvent(self, event):
         """ what happens when close the program"""
         
@@ -166,11 +187,7 @@ class Main(QtWidgets.QMainWindow):
         else:
             event.ignore()
 
-    def connecttoDB(self, path):
-        self.db_conn=sqlite3.connect(path)
-        self.theCursor=self.db_conn.cursor()
-        # print("connected to database")
-        CreateAllTables(self.db_conn)
+
         
     def on_combobox_changed(self, value):
         
@@ -288,15 +305,6 @@ class Main(QtWidgets.QMainWindow):
         lastmeastrackingDATA={}
         self.ClearGraph(1)
         self.ClearTable()
-        
-        directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'Database')
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            os.chdir(directory)
-        else :
-            os.chdir(directory)
-        path=os.path.join(directory,'CUMcGeheeGeneralDB.db')
-        self.connecttoDB(path)
         
         ########
         Assume1suncheck=0
@@ -976,206 +984,6 @@ class Main(QtWidgets.QMainWindow):
         
         self.loadtoDB('IV',lastmeasDATA,lastmeastrackingDATA)  
     
-    def Savedata(self, sample, DATA):
-        year=str(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[0])
-        month=calendar.month_name[int(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[1])]
-        directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'SolarSimAllUsersDATA',str(self.ui.lineEdit_UserName.text()),year,month)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            os.chdir(directory)
-        else :
-            os.chdir(directory)
-        
-        if DATA[sample]['MeasNowType']=='IV':
-            text='#Boulder Solar Simulator, Python\n'+\
-                '\n'+\
-                'DateTime:\t'+	DATA[sample]['datetime'].toString()+'\n'+\
-                'UserName:\t'+str(DATA[sample]['UserName']) +'\n'+\
-                'SampleName:\t'+str(DATA[sample]['SampleName']) +'\n'+\
-                'Comment:\t'+str(DATA[sample]['Comment'])+'\n'+\
-                'Meas. type:\t'+str(DATA[sample]['MeasType'])+'\n'+\
-                'WhichPixels:\t'+str(DATA[sample]['Allpixs'])+'\n'+\
-                'PixelNow:\t'+str(DATA[sample]['Pixel'])+'\n'+\
-                'PixArea:\t'+str(DATA[sample]['pixelArea'])+'\n'+\
-                '#rep:\t'+str(DATA[sample]['RepNumb'])+'\n'+\
-                'DelayRep:\t'+str(DATA[sample]['DelayRep'])+'\n'+\
-                'Aftermpp:\t'+str(DATA[sample]['Aftermpp'])+'\n'+\
-                '\n'+\
-                'WasRefMeasured?:\t'+str(DATA[sample]['IsRefDiodeMeasured'])+'\n'+\
-                'Diode nominal current:\t'+str(DATA[sample]['RefDiodeNomCurr'])+'\n'+\
-                'Diode measured current:\t'+str(DATA[sample]['RefDiodeMeasCurr'])+'\n'+\
-                '#sun:\t'+str(DATA[sample]['Sunintensity'])+'\n'+\
-                'temperature:\t'+str(DATA[sample]['temperature'])+'\n'+\
-                'assume1sun:\t'+str(DATA[sample]['assume1sun'])+'\n'+\
-                '\n'+\
-                'Illumination:\t'+str(DATA[sample]['illum'])+'\n'+\
-                'ShutterOpen:\t'+str(DATA[sample]['ShutterOpen'])+'\n'+\
-                '\n'+\
-                '#IV scan Parameters\n'+\
-                'minvoltage:\t'+str(DATA[sample]['MinVoltage'])+'\n'+\
-                'maxvoltage:\t'+str(DATA[sample]['MaxVoltage'])+'\n'+\
-                'JVstepsize:\t'+str(DATA[sample]['StepSize'])+'\n'+\
-                'currentlimit:\t'+str(DATA[sample]['CurrentLimit'])+'\n'+\
-                'integtime:\t'+str(DATA[sample]['IntegTime'])+'\n'+\
-                'delaypoints:\t'+str(DATA[sample]['Delaypts'])+'\n'+\
-                'delayshutter:\t'+str(DATA[sample]['DelayShutter'])+'\n'+\
-                'scandirection:\t'+str(DATA[sample]['ScanDirection'])+'\n'+\
-                '\n'+\
-                '#IV results\n'+\
-                'Eff\t'+str(DATA[sample]['Eff'])+'\n'+\
-                'Voc\t'+str(DATA[sample]['Voc'])+'\n'+\
-                'FF\t'+str(DATA[sample]['FF'])+'\n'+\
-                'Jsc\t'+str(DATA[sample]['Jsc'])+'\n'+\
-                'Isc\t'+str(DATA[sample]['Isc'])+'\n'+\
-                'Pmpp\t'+str(DATA[sample]['Pmpp'])+'\n'+\
-                'Vmpp\t'+str(DATA[sample]['Vmpp'])+'\n'+\
-                'Jmpp\t'+str(DATA[sample]['Jmpp'])+'\n'+\
-                'Roc\t'+str(DATA[sample]['Roc'])+'\n'+\
-                'Rsc\t'+str(DATA[sample]['Rsc'])+'\n'+\
-                '\n'+\
-                '#IV data\n'+\
-                'Voltage\tCurrentDensity\tCurrent\n'
-            for i in range(len(DATA[sample]['Voltage'])):
-                text+=str(DATA[sample]['Voltage'][i])+'\t'+str(DATA[sample]['CurrentDensity'][i])+'\t'+str(DATA[sample]['Current'][i])+'\n'
-            with open(DATA[sample]['sampleID']+'.txt','w') as file:
-                file.write(text)
-            
-        else:
-            text='#Boulder Solar Simulator, Python\n'+\
-                '\n'+\
-                'DateTime:\t'+	DATA[sample]['datetime'].toString()+'\n'+\
-                'UserName:\t'+str(DATA[sample]['UserName']) +'\n'+\
-                'SampleName:\t'+str(DATA[sample]['SampleName']) +'\n'+\
-                'Comment:\t'+str(DATA[sample]['Comment'])+'\n'+\
-                'Meas. type:\t'+str(DATA[sample]['MeasType'])+'\n'+\
-                'WhichPixels:\t'+str(DATA[sample]['Allpixs'])+'\n'+\
-                'PixelNow:\t'+str(DATA[sample]['Pixel'])+'\n'+\
-                'PixArea:\t'+str(DATA[sample]['pixelArea'])+'\n'+\
-                '#rep:\t'+str(DATA[sample]['RepNumb'])+'\n'+\
-                'DelayRep:\t'+str(DATA[sample]['DelayRep'])+'\n'+\
-                '\n'+\
-                'WasRefMeasured?:\t'+str(DATA[sample]['IsRefDiodeMeasured'])+'\n'+\
-                'Diode nominal current:\t'+str(DATA[sample]['RefDiodeNomCurr'])+'\n'+\
-                'Diode measured current:\t'+str(DATA[sample]['RefDiodeMeasCurr'])+'\n'+\
-                '#sun:\t'+str(DATA[sample]['Sunintensity'])+'\n'+\
-                'temperature:\t'+str(DATA[sample]['temperature'])+'\n'+\
-                'assume1sun:\t'+str(DATA[sample]['assume1sun'])+'\n'+\
-                '\n'+\
-                'Illumination:\t'+str(DATA[sample]['illum'])+'\n'+\
-                'ShutterOpen:\t'+str(DATA[sample]['ShutterOpen'])+'\n'+\
-                '\n'+\
-                '#MPPT scan Parameters\n'+\
-                'InitialVoltage:\t'+str(DATA[sample]['InitialVoltage'])+'\n'+\
-                'initialdelay:\t'+str(DATA[sample]['initialdelay'])+'\n'+\
-                'initialstep:\t'+str(DATA[sample]['initialstep'])+'\n'+\
-                '\n'+\
-                '#MPPT data\n'+\
-                'Time\tPower\tVoltage\tCurrentDensity\tCurrent\tStep\tDelay\n'
-            for i in range(len(DATA[sample]['Voltage'])):
-                text+=str(DATA[sample]['time'][i])+'\t'+str(DATA[sample]['power'][i])+'\t'+str(DATA[sample]['Voltage'][i])+'\t'+str(DATA[sample]['CurrentDensity'][i])+str(DATA[sample]['Current'][i])+'\t'+str(DATA[sample]['step'][i])+'\t'+str(DATA[sample]['delay'][i])+'\n'
-            with open(DATA[sample]['sampleID']+'.txt','w') as file:
-                file.write(text)
-    
-    def loadtoDB(self, MeasType, ivDATA, mppdata):       
-        
-        if MeasType=='IV':
-            DATA=ivDATA
-        else:
-            DATA=mppdata
-        
-        for sample in DATA.keys():
-            #username in Table users        
-            self.theCursor.execute("SELECT id FROM users WHERE user=?",(DATA[sample]['UserName'],))
-            users_id_exists = self.theCursor.fetchone()
-            if users_id_exists==None:
-                self.theCursor.execute("INSERT INTO users (user) VALUES (?)",
-                                (DATA[sample]['UserName'],))
-                users_id_exists=self.theCursor.lastrowid
-            else:
-                users_id_exists=users_id_exists[0]
-                    
-            # #batchname in Table batch, with users_id
-            self.theCursor.execute("SELECT id FROM batch WHERE batchname =? AND users_id =?",(DATA[sample]['Batch#'],users_id_exists,))
-            batch_id_exists = self.theCursor.fetchone()
-            if batch_id_exists==None:
-                self.theCursor.execute("INSERT INTO batch (batchname,users_id) VALUES (?,?)",
-                                (DATA[sample]['Batch#'],users_id_exists,))
-                batch_id_exists=self.theCursor.lastrowid
-            else:
-                batch_id_exists=batch_id_exists[0]
-                    
-            #samplename in table samples, with batch_id
-            self.theCursor.execute("SELECT id FROM samples WHERE samplename =? AND batch_id =?",(DATA[sample]['SampleName'],batch_id_exists,))
-            samples_id_exists = self.theCursor.fetchone()
-            # print(samples_id_exists)
-            if samples_id_exists==None:
-                self.theCursor.execute("INSERT INTO samples (samplename,batch_id) VALUES (?,?)",
-                                (DATA[sample]['SampleName'],batch_id_exists,))
-                samples_id_exists=self.theCursor.lastrowid
-            else:
-                samples_id_exists=samples_id_exists[0]
-            # print(samples_id_exists)
-            
-            #sample pixel area
-            self.theCursor.execute("SELECT id FROM pixelarea WHERE pixel_area =?",(DATA[sample]['pixelArea'],))
-            pixelarea_id_exists = self.theCursor.fetchone()
-            if pixelarea_id_exists==None:
-                self.theCursor.execute("INSERT INTO pixelarea (pixel_area) VALUES (?)",
-                                (DATA[sample]['pixelArea'],))
-                pixelarea_id_exists=self.theCursor.lastrowid
-            else:
-                pixelarea_id_exists=pixelarea_id_exists[0]
-            
-            #table cells
-            self.theCursor.execute("SELECT id FROM cells WHERE cellname =? AND samples_id =? AND batch_id =?",(DATA[sample]['Pixel'],samples_id_exists,batch_id_exists,))
-            cells_id_exists = self.theCursor.fetchone()
-            if cells_id_exists==None:
-                self.theCursor.execute("INSERT INTO cells (cellname,AllpixSeq, pixelarea_id,samples_id,batch_id) VALUES (?,?,?,?,?)",
-                                (DATA[sample]['Pixel'],DATA[sample]['pixelArea'],pixelarea_id_exists,samples_id_exists,batch_id_exists,))
-                cells_id_exists=self.theCursor.lastrowid
-            else:
-                cells_id_exists=cells_id_exists[0]
-        
-            self.theCursor.execute("INSERT INTO Refdiode (IsRefDiodeMeasured,RefDiodeNomCurr,RefDiodeMeasCurr,temperature) VALUES (?,?,?,?)",
-                                (DATA[sample]['IsRefDiodeMeasured'],DATA[sample]['RefDiodeNomCurr'],DATA[sample]['RefDiodeMeasCurr'],DATA[sample]['temperature'],))
-            refdiode_id_exists=self.theCursor.lastrowid
-            
-            
-            if DATA[sample]['MeasNowType']=='IV':
-                #tables JVmeas
-                self.theCursor.execute("SELECT id FROM JVmeas WHERE MeasurementLongName =? AND cells_id =? AND samples_id =? AND batch_id =?",(DATA[sample]['sampleID'],cells_id_exists,samples_id_exists,batch_id_exists,))
-                JVmeas_id_exists = self.theCursor.fetchone()
-                if JVmeas_id_exists==None:
-                    self.theCursor.execute("INSERT INTO JVmeas (DateTimeJV, Eff, Voc,Jsc,Isc, FF, Vmpp, Jmpp,Pmpp,Roc,Rsc,ScanDirect,Delay, DelayShutter,IntegTime,Vmin,Vmax,MeasType,MeasNowType,StepSize,CurrentLimit,LightDark,IlluminationIntensity,commentJV,MeasurementLongName,SampleNamePix,linktorawdata,aftermpp,samples_id,batch_id,cells_id,Refdiod_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                                    (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate).replace('T','-').replace(':','-') ,DATA[sample]['Eff'],DATA[sample]['Voc'],DATA[sample]['Jsc'],
-                                     DATA[sample]['Isc'],DATA[sample]['FF'],DATA[sample]['Vmpp'],DATA[sample]['Jmpp'],
-                                     DATA[sample]['Pmpp'],DATA[sample]['Roc'],DATA[sample]['Rsc'],DATA[sample]['ScanDirection'],
-                                     DATA[sample]['Delaypts'],DATA[sample]['DelayShutter'],DATA[sample]['IntegTime'],DATA[sample]['MinVoltage'],
-                                     DATA[sample]['MaxVoltage'],DATA[sample]['MeasType'],DATA[sample]['MeasNowType'],DATA[sample]['StepSize'],
-                                     DATA[sample]['CurrentLimit'],DATA[sample]['illum'],DATA[sample]['Sunintensity'],DATA[sample]['Comment'],
-                                     DATA[sample]['sampleID'],DATA[sample]['SampleNamePix'],DATA[sample]['linktorawdata'],DATA[sample]['Aftermpp'],
-                                     samples_id_exists,batch_id_exists,cells_id_exists,refdiode_id_exists,))
-                    JVmeas_id_exists=self.theCursor.lastrowid
-                else:
-                    JVmeas_id_exists=JVmeas_id_exists[0]
-            else:
-                #tables Mppmeas
-                self.theCursor.execute("SELECT id FROM MPPmeas WHERE MeasurementLongName =? AND cells_id =? AND samples_id =? AND batch_id =?",(DATA[sample]['sampleID'],cells_id_exists,samples_id_exists,batch_id_exists,))
-                MPPmeas_id_exists = self.theCursor.fetchone()
-                if MPPmeas_id_exists==None:
-                    self.theCursor.execute("INSERT INTO MPPmeas (DateTimeMPP,TrackingAlgo,MeasType,MeasNowType,TrackingDuration,Vstart,Vstep,Delay,PowerEnd,commentmpp,LightDark,IlluminationIntensity,MeasurementLongName,SampleNamePix,linktorawdata,samples_id,batch_id, cells_id,Refdiod_id,PowerEnd) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                                    (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate).replace('T','-').replace(':','-'),'perturbe&observe',DATA[sample]['MeasType'],DATA[sample]['MeasNowType'],
-                                     DATA[sample]['trackingtime'],DATA[sample]['InitialVoltage'],DATA[sample]['initialstep'],DATA[sample]['initialdelay'],
-                                     DATA[sample]['power'][-1],DATA[sample]['Comment'],DATA[sample]['illum'],
-                                     DATA[sample]['Sunintensity'],DATA[sample]['sampleID'],DATA[sample]['SampleNamePix'],DATA[sample]['linktorawdata'],
-                                     samples_id_exists,batch_id_exists,cells_id_exists,refdiode_id_exists,DATA[sample]['power'][-1],))
-                    MPPmeas_id_exists=self.theCursor.lastrowid
-                else:
-                    MPPmeas_id_exists=MPPmeas_id_exists[0]
-                    
-            self.db_conn.commit()
-        
-    
     def AnalysisJV(self, sample):
         global AllDATA, lastmeasDATA, Sunintensity        
         
@@ -1296,8 +1104,296 @@ class Main(QtWidgets.QMainWindow):
             # print(AllDATA[sample]['Roc'])
         except:
             print("error with fits, probably a dark curve...")
+            
+#%%######################################################################################################            
+    def Savedata(self, sample, DATA):
+        year=str(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[0])
+        month=calendar.month_name[int(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[1])]
+        directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'SolarSimAllUsersDATA',str(self.ui.lineEdit_UserName.text()),year,month)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            os.chdir(directory)
+        else :
+            os.chdir(directory)
+        
+        if DATA[sample]['MeasNowType']=='IV':
+            text='#Boulder Solar Simulator, Python\n'+\
+                '\n'+\
+                'DateTime:\t'+	DATA[sample]['datetime'].toString()+'\n'+\
+                'UserName:\t'+str(DATA[sample]['UserName']) +'\n'+\
+                'SampleName:\t'+str(DATA[sample]['SampleName']) +'\n'+\
+                'Comment:\t'+str(DATA[sample]['Comment'])+'\n'+\
+                'Meas. type:\t'+str(DATA[sample]['MeasType'])+'\n'+\
+                'WhichPixels:\t'+str(DATA[sample]['Allpixs'])+'\n'+\
+                'PixelNow:\t'+str(DATA[sample]['Pixel'])+'\n'+\
+                'PixArea:\t'+str(DATA[sample]['pixelArea'])+'\n'+\
+                '#rep:\t'+str(DATA[sample]['RepNumb'])+'\n'+\
+                'DelayRep:\t'+str(DATA[sample]['DelayRep'])+'\n'+\
+                'Aftermpp:\t'+str(DATA[sample]['Aftermpp'])+'\n'+\
+                '\n'+\
+                'WasRefMeasured?:\t'+str(DATA[sample]['IsRefDiodeMeasured'])+'\n'+\
+                'Diode nominal current:\t'+str(DATA[sample]['RefDiodeNomCurr'])+'\n'+\
+                'Diode measured current:\t'+str(DATA[sample]['RefDiodeMeasCurr'])+'\n'+\
+                '#sun:\t'+str(DATA[sample]['Sunintensity'])+'\n'+\
+                'temperature:\t'+str(DATA[sample]['temperature'])+'\n'+\
+                'assume1sun:\t'+str(DATA[sample]['assume1sun'])+'\n'+\
+                '\n'+\
+                'Illumination:\t'+str(DATA[sample]['illum'])+'\n'+\
+                'ShutterOpen:\t'+str(DATA[sample]['ShutterOpen'])+'\n'+\
+                '\n'+\
+                '#IV scan Parameters\n'+\
+                'minvoltage:\t'+str(DATA[sample]['MinVoltage'])+'\n'+\
+                'maxvoltage:\t'+str(DATA[sample]['MaxVoltage'])+'\n'+\
+                'JVstepsize:\t'+str(DATA[sample]['StepSize'])+'\n'+\
+                'currentlimit:\t'+str(DATA[sample]['CurrentLimit'])+'\n'+\
+                'integtime:\t'+str(DATA[sample]['IntegTime'])+'\n'+\
+                'delaypoints:\t'+str(DATA[sample]['Delaypts'])+'\n'+\
+                'delayshutter:\t'+str(DATA[sample]['DelayShutter'])+'\n'+\
+                'scandirection:\t'+str(DATA[sample]['ScanDirection'])+'\n'+\
+                '\n'+\
+                '#IV results\n'+\
+                'Eff\t'+str(DATA[sample]['Eff'])+'\n'+\
+                'Voc\t'+str(DATA[sample]['Voc'])+'\n'+\
+                'FF\t'+str(DATA[sample]['FF'])+'\n'+\
+                'Jsc\t'+str(DATA[sample]['Jsc'])+'\n'+\
+                'Isc\t'+str(DATA[sample]['Isc'])+'\n'+\
+                'Pmpp\t'+str(DATA[sample]['Pmpp'])+'\n'+\
+                'Vmpp\t'+str(DATA[sample]['Vmpp'])+'\n'+\
+                'Jmpp\t'+str(DATA[sample]['Jmpp'])+'\n'+\
+                'Roc\t'+str(DATA[sample]['Roc'])+'\n'+\
+                'Rsc\t'+str(DATA[sample]['Rsc'])+'\n'+\
+                '\n'+\
+                '#IV data\n'+\
+                'Voltage\tCurrentDensity\tCurrent\n'
+            for i in range(len(DATA[sample]['Voltage'])):
+                text+=str(DATA[sample]['Voltage'][i])+'\t'+str(DATA[sample]['CurrentDensity'][i])+'\t'+str(DATA[sample]['Current'][i])+'\n'
+            with open(DATA[sample]['sampleID']+'.txt','w') as file:
+                file.write(text)
+            
+        else:
+            text='#Boulder Solar Simulator, Python\n'+\
+                '\n'+\
+                'DateTime:\t'+	DATA[sample]['datetime'].toString()+'\n'+\
+                'UserName:\t'+str(DATA[sample]['UserName']) +'\n'+\
+                'SampleName:\t'+str(DATA[sample]['SampleName']) +'\n'+\
+                'Comment:\t'+str(DATA[sample]['Comment'])+'\n'+\
+                'Meas. type:\t'+str(DATA[sample]['MeasType'])+'\n'+\
+                'WhichPixels:\t'+str(DATA[sample]['Allpixs'])+'\n'+\
+                'PixelNow:\t'+str(DATA[sample]['Pixel'])+'\n'+\
+                'PixArea:\t'+str(DATA[sample]['pixelArea'])+'\n'+\
+                '#rep:\t'+str(DATA[sample]['RepNumb'])+'\n'+\
+                'DelayRep:\t'+str(DATA[sample]['DelayRep'])+'\n'+\
+                '\n'+\
+                'WasRefMeasured?:\t'+str(DATA[sample]['IsRefDiodeMeasured'])+'\n'+\
+                'Diode nominal current:\t'+str(DATA[sample]['RefDiodeNomCurr'])+'\n'+\
+                'Diode measured current:\t'+str(DATA[sample]['RefDiodeMeasCurr'])+'\n'+\
+                '#sun:\t'+str(DATA[sample]['Sunintensity'])+'\n'+\
+                'temperature:\t'+str(DATA[sample]['temperature'])+'\n'+\
+                'assume1sun:\t'+str(DATA[sample]['assume1sun'])+'\n'+\
+                '\n'+\
+                'Illumination:\t'+str(DATA[sample]['illum'])+'\n'+\
+                'ShutterOpen:\t'+str(DATA[sample]['ShutterOpen'])+'\n'+\
+                '\n'+\
+                '#MPPT scan Parameters\n'+\
+                'InitialVoltage:\t'+str(DATA[sample]['InitialVoltage'])+'\n'+\
+                'initialdelay:\t'+str(DATA[sample]['initialdelay'])+'\n'+\
+                'initialstep:\t'+str(DATA[sample]['initialstep'])+'\n'+\
+                '\n'+\
+                '#MPPT data\n'+\
+                'Time\tPower\tVoltage\tCurrentDensity\tCurrent\tStep\tDelay\n'
+            for i in range(len(DATA[sample]['Voltage'])):
+                text+=str(DATA[sample]['time'][i])+'\t'+str(DATA[sample]['power'][i])+'\t'+str(DATA[sample]['Voltage'][i])+'\t'+str(DATA[sample]['CurrentDensity'][i])+str(DATA[sample]['Current'][i])+'\t'+str(DATA[sample]['step'][i])+'\t'+str(DATA[sample]['delay'][i])+'\n'
+            with open(DATA[sample]['sampleID']+'.txt','w') as file:
+                file.write(text)
+
+#%%######################################################################################################    
+    def loadtoDB(self, MeasType, ivDATA, mppdata):       
+        
+        if MeasType=='IV':
+            DATA=ivDATA
+        else:
+            DATA=mppdata
+        
+        for sample in DATA.keys():
+            #username in Table users        
+            self.theCursor.execute("SELECT id FROM users WHERE user=?",(DATA[sample]['UserName'],))
+            users_id_exists = self.theCursor.fetchone()
+            if users_id_exists==None:
+                self.theCursor.execute("INSERT INTO users (user) VALUES (?)",
+                                (DATA[sample]['UserName'],))
+                users_id_exists=self.theCursor.lastrowid
+            else:
+                users_id_exists=users_id_exists[0]
+                    
+            # #batchname in Table batch, with users_id
+            self.theCursor.execute("SELECT id FROM batch WHERE batchname =? AND users_id =?",(DATA[sample]['Batch#'],users_id_exists,))
+            batch_id_exists = self.theCursor.fetchone()
+            if batch_id_exists==None:
+                self.theCursor.execute("INSERT INTO batch (batchname,users_id) VALUES (?,?)",
+                                (DATA[sample]['Batch#'],users_id_exists,))
+                batch_id_exists=self.theCursor.lastrowid
+            else:
+                batch_id_exists=batch_id_exists[0]
+                    
+            #samplename in table samples, with batch_id
+            self.theCursor.execute("SELECT id FROM samples WHERE samplename =? AND batch_id =?",(DATA[sample]['SampleName'],batch_id_exists,))
+            samples_id_exists = self.theCursor.fetchone()
+            # print(samples_id_exists)
+            if samples_id_exists==None:
+                self.theCursor.execute("INSERT INTO samples (samplename,batch_id) VALUES (?,?)",
+                                (DATA[sample]['SampleName'],batch_id_exists,))
+                samples_id_exists=self.theCursor.lastrowid
+            else:
+                samples_id_exists=samples_id_exists[0]
+            # print(samples_id_exists)
+            
+            #sample pixel area
+            self.theCursor.execute("SELECT id FROM pixelarea WHERE pixel_area =?",(DATA[sample]['pixelArea'],))
+            pixelarea_id_exists = self.theCursor.fetchone()
+            if pixelarea_id_exists==None:
+                self.theCursor.execute("INSERT INTO pixelarea (pixel_area) VALUES (?)",
+                                (DATA[sample]['pixelArea'],))
+                pixelarea_id_exists=self.theCursor.lastrowid
+            else:
+                pixelarea_id_exists=pixelarea_id_exists[0]
+            
+            #table cells
+            self.theCursor.execute("SELECT id FROM cells WHERE cellname =? AND samples_id =? AND batch_id =?",(DATA[sample]['Pixel'],samples_id_exists,batch_id_exists,))
+            cells_id_exists = self.theCursor.fetchone()
+            if cells_id_exists==None:
+                self.theCursor.execute("INSERT INTO cells (cellname,AllpixSeq, pixelarea_id,samples_id,batch_id) VALUES (?,?,?,?,?)",
+                                (DATA[sample]['Pixel'],DATA[sample]['pixelArea'],pixelarea_id_exists,samples_id_exists,batch_id_exists,))
+                cells_id_exists=self.theCursor.lastrowid
+            else:
+                cells_id_exists=cells_id_exists[0]
+        
+            self.theCursor.execute("INSERT INTO Refdiode (IsRefDiodeMeasured,RefDiodeNomCurr,RefDiodeMeasCurr,temperature) VALUES (?,?,?,?)",
+                                (DATA[sample]['IsRefDiodeMeasured'],DATA[sample]['RefDiodeNomCurr'],DATA[sample]['RefDiodeMeasCurr'],DATA[sample]['temperature'],))
+            refdiode_id_exists=self.theCursor.lastrowid
+            
+            
+            if DATA[sample]['MeasNowType']=='IV':
+                #tables JVmeas
+                self.theCursor.execute("SELECT id FROM JVmeas WHERE MeasurementLongName =? AND cells_id =? AND samples_id =? AND batch_id =?",(DATA[sample]['sampleID'],cells_id_exists,samples_id_exists,batch_id_exists,))
+                JVmeas_id_exists = self.theCursor.fetchone()
+                if JVmeas_id_exists==None:
+                    self.theCursor.execute("INSERT INTO JVmeas (DateTimeJV, Eff, Voc,Jsc,Isc, FF, Vmpp, Jmpp,Pmpp,Roc,Rsc,ScanDirect,Delay, DelayShutter,IntegTime,Vmin,Vmax,MeasType,MeasNowType,StepSize,CurrentLimit,LightDark,IlluminationIntensity,commentJV,MeasurementLongName,SampleNamePix,linktorawdata,aftermpp,samples_id,batch_id,cells_id,Refdiod_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                    (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate).replace('T','-').replace(':','-') ,DATA[sample]['Eff'],DATA[sample]['Voc'],DATA[sample]['Jsc'],
+                                     DATA[sample]['Isc'],DATA[sample]['FF'],DATA[sample]['Vmpp'],DATA[sample]['Jmpp'],
+                                     DATA[sample]['Pmpp'],DATA[sample]['Roc'],DATA[sample]['Rsc'],DATA[sample]['ScanDirection'],
+                                     DATA[sample]['Delaypts'],DATA[sample]['DelayShutter'],DATA[sample]['IntegTime'],DATA[sample]['MinVoltage'],
+                                     DATA[sample]['MaxVoltage'],DATA[sample]['MeasType'],DATA[sample]['MeasNowType'],DATA[sample]['StepSize'],
+                                     DATA[sample]['CurrentLimit'],DATA[sample]['illum'],DATA[sample]['Sunintensity'],DATA[sample]['Comment'],
+                                     DATA[sample]['sampleID'],DATA[sample]['SampleNamePix'],DATA[sample]['linktorawdata'],DATA[sample]['Aftermpp'],
+                                     samples_id_exists,batch_id_exists,cells_id_exists,refdiode_id_exists,))
+                    JVmeas_id_exists=self.theCursor.lastrowid
+                else:
+                    JVmeas_id_exists=JVmeas_id_exists[0]
+            else:
+                #tables Mppmeas
+                self.theCursor.execute("SELECT id FROM MPPmeas WHERE MeasurementLongName =? AND cells_id =? AND samples_id =? AND batch_id =?",(DATA[sample]['sampleID'],cells_id_exists,samples_id_exists,batch_id_exists,))
+                MPPmeas_id_exists = self.theCursor.fetchone()
+                if MPPmeas_id_exists==None:
+                    self.theCursor.execute("INSERT INTO MPPmeas (DateTimeMPP,TrackingAlgo,MeasType,MeasNowType,TrackingDuration,Vstart,Vstep,Delay,PowerEnd,commentmpp,LightDark,IlluminationIntensity,MeasurementLongName,SampleNamePix,linktorawdata,samples_id,batch_id, cells_id,Refdiod_id,PowerEnd) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                    (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate).replace('T','-').replace(':','-'),'perturbe&observe',DATA[sample]['MeasType'],DATA[sample]['MeasNowType'],
+                                     DATA[sample]['trackingtime'],DATA[sample]['InitialVoltage'],DATA[sample]['initialstep'],DATA[sample]['initialdelay'],
+                                     DATA[sample]['power'][-1],DATA[sample]['Comment'],DATA[sample]['illum'],
+                                     DATA[sample]['Sunintensity'],DATA[sample]['sampleID'],DATA[sample]['SampleNamePix'],DATA[sample]['linktorawdata'],
+                                     samples_id_exists,batch_id_exists,cells_id_exists,refdiode_id_exists,DATA[sample]['power'][-1],))
+                    MPPmeas_id_exists=self.theCursor.lastrowid
+                else:
+                    MPPmeas_id_exists=MPPmeas_id_exists[0]
+                    
+            self.db_conn.commit()
         
     
+    def connecttoDB(self):
+        directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'Database')
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            os.chdir(directory)
+        else :
+            os.chdir(directory)
+        path=os.path.join(directory,'CUMcGeheeGeneralDB.db')
+        
+        self.db_conn=sqlite3.connect(path)
+        self.theCursor=self.db_conn.cursor()
+        # print("connected to database")
+        CreateAllTables(self.db_conn)
+    
+    def onclickDBtab(self,indexoftab):
+        # print(indexoftab)   
+        if indexoftab:
+            self.ui.comboBox_DBTime.clear()
+            timecriterialist=DBreadPack.timecriteria
+            for i in range(len(timecriterialist)):
+                self.ui.comboBox_DBTime.addItem(timecriterialist[i])
+                
+            
+    def on_combobox_DBTime_changed(self):
+
+        self.ui.comboBox_DBTimeYaxis.clear()
+        
+        yaxisoptionlist=DBreadPack.fromtocriteria
+        for i in range(len(yaxisoptionlist)):
+            if 'JV' in self.ui.comboBox_DBTime.currentText():
+                if 'MPP' not in yaxisoptionlist[i]:
+                    self.ui.comboBox_DBTimeYaxis.addItem(yaxisoptionlist[i])
+            elif 'MPP' in self.ui.comboBox_DBTime.currentText():
+                if 'JV' not in yaxisoptionlist[i]:
+                    self.ui.comboBox_DBTimeYaxis.addItem(yaxisoptionlist[i])
+        
+        self.ui.comboBox_DBTime_restrictions.clear()
+        
+        restrictionslist=DBreadPack.fromtocriteria + DBreadPack.dropdowncriteria
+            
+        for i in range(len(restrictionslist)):
+            if 'JV' in self.ui.comboBox_DBTime.currentText():
+                if 'MPP' not in restrictionslist[i]:
+                    self.ui.comboBox_DBTime_restrictions.addItem(restrictionslist[i])
+            elif 'MPP' in self.ui.comboBox_DBTime.currentText():
+                if 'JV' not in restrictionslist[i]:
+                    self.ui.comboBox_DBTime_restrictions.addItem(restrictionslist[i])
+
+    def on_combobox_DBTimeRestrictions_changed(self):
+        criteria=self.ui.comboBox_DBTime_restrictions.currentText()
+        if criteria in DBreadPack.fromtocriteria:
+            # print(criteria)
+            self.theCursor.execute("SELECT "+criteria.split('.')[1]+" FROM "+criteria.split('.')[0])
+            listoptions=list(set([x[0] for x in self.theCursor.fetchall()]))
+            minimum=min(listoptions)
+            maximum=max(listoptions)
+            self.ui.lineEdit_DBTime_From.setText(str(minimum))
+            self.ui.lineEdit_DBTime_To.setText(str(maximum))
+        elif criteria in DBreadPack.dropdowncriteria:
+            # print('here')
+            self.ui.listWidget_DBTime_Restrictions.clear()
+            self.theCursor.execute("SELECT "+criteria.split('.')[1]+" FROM "+criteria.split('.')[0])
+            listoptions=list(set([x[0] for x in self.theCursor.fetchall()]))
+            for item in listoptions:
+                self.ui.listWidget_DBTime_Restrictions.addItem(str(item))
+    
+    def Addrestriction(self):
+        
+        currentrestrictionparam = self.ui.comboBox_DBTime_restrictions.currentText()
+        if currentrestrictionparam in DBreadPack.fromtocriteria:
+            self.ui.listWidget_DBTime_chosenRestrictions.addItem(currentrestrictionparam+'__'+self.ui.lineEdit_DBTime_From.text()+'__'+self.ui.lineEdit_DBTime_To.text())
+        elif currentrestrictionparam in DBreadPack.dropdowncriteria:
+            selectedrestparam=self.ui.listWidget_DBTime_Restrictions.selectedItems()
+            for i in selectedrestparam:
+                self.ui.listWidget_DBTime_chosenRestrictions.addItem(currentrestrictionparam+'__'+i.text())
+        self.SearchAndPlot()
+                
+    def Removerestriction(self):
+        self.ui.listWidget_DBTime_chosenRestrictions.takeItem(self.ui.listWidget_DBTime_chosenRestrictions.currentRow())
+        self.SearchAndPlot()
+        
+    def SearchAndPlot(self):
+        print('searchandplot')
+        #make the search in DB
+        #plot graph
+
+#%%######################################################################################################    
     def UpdateTable(self, listdata):
         
         self.ui.tableWidget.setRowCount(len(listdata.keys()))
