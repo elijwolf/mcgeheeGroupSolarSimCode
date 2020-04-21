@@ -103,11 +103,11 @@ def CreateAllTables(db_conn):
                 samples_id INTEGER,
                 batch_id INTEGER,
                 cells_id INTEGER,
-                Refdiod_id INTEGER,
+                Refdiode_id INTEGER,
                 FOREIGN KEY(batch_id) REFERENCES batch(id) ON DELETE CASCADE,
                 FOREIGN KEY(samples_id) REFERENCES samples(id),
                 FOREIGN KEY(cells_id) REFERENCES cells(id),
-                FOREIGN KEY(Refdiod_id) REFERENCES Refdiode(id)
+                FOREIGN KEY(Refdiode_id) REFERENCES Refdiode(id)
                 );""")
         db_conn.commit()
     except sqlite3.OperationalError:
@@ -145,11 +145,11 @@ def CreateAllTables(db_conn):
                 samples_id INTEGER,
                 batch_id INTEGER,
                 cells_id INTEGER,
-                Refdiod_id INTEGER,
+                Refdiode_id INTEGER,
                 FOREIGN KEY(batch_id) REFERENCES batch(id) ON DELETE CASCADE,
                 FOREIGN KEY(samples_id) REFERENCES samples(id),
                 FOREIGN KEY(cells_id) REFERENCES cells(id),
-                FOREIGN KEY(Refdiod_id) REFERENCES Refdiode(id)
+                FOREIGN KEY(Refdiode_id) REFERENCES Refdiode(id)
                 );""")
         db_conn.commit()
     except sqlite3.OperationalError:

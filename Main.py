@@ -130,7 +130,7 @@ class Main(QtWidgets.QMainWindow):
 
         self.fig4 = Figure()
         self.DBgraph = self.fig4.add_subplot(111)
-        self.DBgraph.set_xlabel('Time (s)')
+        self.DBgraph.set_xlabel('Date/Time')
         self.DBgraph.set_ylabel('X (-)')
         # self.DBgraph.axhline(y=0, color='k')
         # self.DBgraph.axvline(x=0, color='k')
@@ -183,6 +183,8 @@ class Main(QtWidgets.QMainWindow):
                                       QMessageBox.Yes | QMessageBox.No)
         if close == QMessageBox.Yes:
             shutdownKeithley(self.keithleyObject)
+            self.theCursor.close()
+            self.db_conn.close()
             event.accept()
         else:
             event.ignore()
@@ -539,8 +541,7 @@ class Main(QtWidgets.QMainWindow):
             # print('measurement finished')
         
         #disconnect from DB
-        self.theCursor.close()
-        self.db_conn.close()
+
         QMessageBox.information(self,'Finished', 'The sequence is finished.')         
         self.ui.pushButton_StartMeas.setEnabled(True)
     
@@ -757,9 +758,159 @@ class Main(QtWidgets.QMainWindow):
             
             if STOPMEAS==1:
                 break
-        self.loadtoDB('MPP',lastmeasDATA,lastmeastrackingDATA)  
+        self.loadtoDB('MPP',lastmeasDATA,lastmeastrackingDATA) 
         
     def PlotIV(self, keithleyObject, pixels, pixcolorslist, scandirections, Rep):
+        global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
+        global aftermpp,boxCurrent, boxVoltage, keithleyAddress
+        # print('')
+        # print(scandirections)
+        allpixtobemeasured=''
+        for item in range(len(pixels)):
+            allpixtobemeasured+=pixels[item]
+            allpixtobemeasured+=', '
+        allpixtobemeasured=allpixtobemeasured[:-2]
+        
+        year=str(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[0])
+        month=calendar.month_name[int(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[1])]
+        directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'SolarSimAllUsersDATA',str(self.ui.lineEdit_UserName.text()),year,month)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            os.chdir(directory)
+        else :
+            os.chdir(directory)
+            
+        for item in range(len(pixels)):
+            connectPixel(boxCurrent, boxVoltage, pixels[item])
+            pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
+            pixcolor=pixcolorslist[item]
+            
+            integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
+            # NPLC of 1 with 60Hz power, new value every 16.67ms
+            # integtime=50ms => NPLC = .050*60 = 3
+            NPLC=integtime*60/1000
+            if NPLC>10:
+                NPLC=10
+            if NPLC<0.01:
+                NPLC=0.01
+            currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
+            prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
+            for direction in scandirections:
+                # if keithleyAddress=='Test':
+                #     QtTest.QTest.qWait(500)
+                minV=self.ui.doubleSpinBox_JVminvoltage.value()/1000
+                maxV=self.ui.doubleSpinBox_JVmaxvoltage.value()/1000
+                stepV=self.ui.doubleSpinBox_JVstepsize.value()/1000
+                delay=self.ui.doubleSpinBox_JVdelaypoints.value()
+                
+                data=takeIV(keithleyObject, minV,maxV,stepV,delay,direction,NPLC, currentlimit) 
+                currentlist=data[:,1]
+                voltagelist=data[:,0]
+                currentdenlist=[x*1000/pixarea for x in data[:,1]] #assume 1sun, and assume keithley gives Amperes back 
+                 
+                if direction == 1:#forward scan 
+                    directionstr='fwd' 
+                    self.JVgraph.plot(data[:,0],currentdenlist, linestyle="dashed",color=pixcolor) 
+                elif direction == 0:#reverse scan 
+                    directionstr='rev' 
+                    self.JVgraph.plot(data[:,0],currentdenlist, linestyle="solid",color=pixcolor) 
+                self.fig1.canvas.draw_idle() 
+                 
+                if shutteropen: 
+                    illum='lt' 
+                else: 
+                    illum='dk' 
+                if illum == 'dk': 
+                    if direction == 1:#forward scan 
+                        self.DIVgraphlin.plot(data[:,0],currentdenlist, linestyle="dashed",color=pixcolor) 
+                    elif direction == 0:#reverse scan 
+                        self.DIVgraphlin.plot(data[:,0],currentdenlist, linestyle="solid",color=pixcolor) 
+                    ydataabs=list(map(lambda x: abs(x),currentdenlist)) 
+                    if direction == 1:#forward scan 
+                        self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="dashed",color=pixcolor) 
+                    elif direction == 0:#reverse scan 
+                        self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="solid",color=pixcolor) 
+                    self.fig3.canvas.draw_idle() 
+                    self.fig3.canvas.flush_events() 
+ 
+                self.fig1.canvas.flush_events() 
+                
+                if shutteropen:
+                    illum='lt'
+                    self.ClearGraph('LIV')
+                else:
+                    illum='dk'
+                    self.ClearGraph('DIV')
+                
+                if self.ui.radioButton_Assume1sun.isChecked():
+                    radioButton_Assume1sun='True'
+                else:
+                    radioButton_Assume1sun='False'
+                timestr = QtCore.QDateTime.currentDateTime().toString(QtCore.Qt.ISODate)
+                timestr=timestr.replace(':','').replace('-','')
+
+                sample=str(self.ui.lineEdit_SampleName.text()) +'_'+  'pX'+pixels[item] +'_'+ directionstr +'_'+ illum +'_'+ 'lp'+str(Rep) +'_'+ timestr  
+                samplename=str(self.ui.lineEdit_SampleName.text()).replace('-','_')
+                if '_' in str(self.ui.lineEdit_SampleName.text()):
+                    Batch=str(self.ui.lineEdit_SampleName.text()).split('_')[0]
+                    Substrate=str(self.ui.lineEdit_SampleName.text()).split('_')[1]
+                else:
+                    Batch='None'
+                    Substrate='None'
+                
+                commenttext=str(self.ui.lineEdit_Comment.text())
+                if aftermpp:
+                    if 'aftermpp' not in commenttext:
+                        commenttext+='_aftermpp'
+                
+                AllDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ pixels[item], 
+                                 'linktorawdata':str(os.path.join(str(directory),sample+'.txt')),'SampleName': samplename,'Batch#':Batch,'Substrate#':Substrate, 'Pixel':pixels[item], 'Allpixs':allpixtobemeasured,
+                                 'ScanDirection': directionstr, 'illum': illum, 'Sunintensity': Sunintensity, 'IsRefDiodeMeasured': RefDiodeChecked, 
+                                 'RefDiodeNomCurr':self.ui.doubleSpinBox_DiodeNominalCurrent.value(),'RefDiodeMeasCurr':self.ui.doubleSpinBox_MeasuredDiodeCurrent.value(),
+                                 'datetime': QtCore.QDateTime.currentDateTime(), 'Comment': commenttext,'temperature':self.ui.doubleSpinBox_Temperature.value(),
+                                 'UserName': str(self.ui.lineEdit_UserName.text()), 'MeasType': str(self.ui.comboBox_MeasType.currentText()),'MeasNowType': 'IV',
+                                 'pixcolor':pixcolor,'RepNumb': Rep,'DelayRep':self.ui.spinBox_RepDelay.value(), 'pixelArea': pixarea,'assume1sun':radioButton_Assume1sun,'ShutterOpen':shutteropen,
+                                 'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
+                                 'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
+                                 'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
+                                 'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
+                                 'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
+                                 'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
+                                 }
+                lastmeasDATA[sample]=AllDATA[sample]
+
+                self.AnalysisJV(sample)
+                self.Savedata(sample,AllDATA)
+                self.UpdateTable(lastmeasDATA)
+                if STOPMEAS==1:
+                    break
+            if STOPMEAS==1:
+                break
+            
+        if shutteropen:
+            self.ClearGraph('LIV')
+        else:
+            self.ClearGraph('DIV')
+        for sampleitem in lastmeasDATA.keys():
+            pixcoloritem=lastmeasDATA[sampleitem]['pixcolor']
+            if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                self.JVgraph.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="dashed",color=pixcoloritem)
+            elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                self.JVgraph.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="solid",color=pixcoloritem)
+            if lastmeasDATA[sampleitem]['illum'] == 'dk':
+                if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                    self.DIVgraphlin.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="dashed",color=pixcoloritem)
+                elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                    self.DIVgraphlin.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="solid",color=pixcoloritem)
+                ydataabs=list(map(lambda x: abs(x),lastmeasDATA[sampleitem]['CurrentDensity']))
+                if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                    self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="dashed",color=pixcoloritem)
+                elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                    self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="solid",color=pixcoloritem)
+        
+        self.loadtoDB('IV',lastmeasDATA,lastmeastrackingDATA) 
+        
+    def PlotIVlive(self, keithleyObject, pixels, pixcolorslist, scandirections, Rep): #live plot point by point, this seems to be slow when using the keithley
         global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
         global aftermpp,boxCurrent, boxVoltage, keithleyAddress
         # print('')
@@ -1262,7 +1413,7 @@ class Main(QtWidgets.QMainWindow):
             cells_id_exists = self.theCursor.fetchone()
             if cells_id_exists==None:
                 self.theCursor.execute("INSERT INTO cells (cellname,AllpixSeq, pixelarea_id,samples_id,batch_id) VALUES (?,?,?,?,?)",
-                                (DATA[sample]['Pixel'],DATA[sample]['pixelArea'],pixelarea_id_exists,samples_id_exists,batch_id_exists,))
+                                (DATA[sample]['Pixel'],DATA[sample]['Allpixs'],pixelarea_id_exists,samples_id_exists,batch_id_exists,))
                 cells_id_exists=self.theCursor.lastrowid
             else:
                 cells_id_exists=cells_id_exists[0]
@@ -1277,7 +1428,7 @@ class Main(QtWidgets.QMainWindow):
                 self.theCursor.execute("SELECT id FROM JVmeas WHERE MeasurementLongName =? AND cells_id =? AND samples_id =? AND batch_id =?",(DATA[sample]['sampleID'],cells_id_exists,samples_id_exists,batch_id_exists,))
                 JVmeas_id_exists = self.theCursor.fetchone()
                 if JVmeas_id_exists==None:
-                    self.theCursor.execute("INSERT INTO JVmeas (DateTimeJV, Eff, Voc,Jsc,Isc, FF, Vmpp, Jmpp,Pmpp,Roc,Rsc,ScanDirect,Delay, DelayShutter,IntegTime,Vmin,Vmax,MeasType,MeasNowType,StepSize,CurrentLimit,LightDark,IlluminationIntensity,commentJV,MeasurementLongName,SampleNamePix,linktorawdata,aftermpp,samples_id,batch_id,cells_id,Refdiod_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    self.theCursor.execute("INSERT INTO JVmeas (DateTimeJV, Eff, Voc,Jsc,Isc, FF, Vmpp, Jmpp,Pmpp,Roc,Rsc,ScanDirect,Delay, DelayShutter,IntegTime,Vmin,Vmax,MeasType,MeasNowType,StepSize,CurrentLimit,LightDark,IlluminationIntensity,commentJV,MeasurementLongName,SampleNamePix,linktorawdata,aftermpp,samples_id,batch_id,cells_id,Refdiode_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                                     (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate).replace('T','-').replace(':','-') ,DATA[sample]['Eff'],DATA[sample]['Voc'],DATA[sample]['Jsc'],
                                      DATA[sample]['Isc'],DATA[sample]['FF'],DATA[sample]['Vmpp'],DATA[sample]['Jmpp'],
                                      DATA[sample]['Pmpp'],DATA[sample]['Roc'],DATA[sample]['Rsc'],DATA[sample]['ScanDirection'],
@@ -1294,7 +1445,7 @@ class Main(QtWidgets.QMainWindow):
                 self.theCursor.execute("SELECT id FROM MPPmeas WHERE MeasurementLongName =? AND cells_id =? AND samples_id =? AND batch_id =?",(DATA[sample]['sampleID'],cells_id_exists,samples_id_exists,batch_id_exists,))
                 MPPmeas_id_exists = self.theCursor.fetchone()
                 if MPPmeas_id_exists==None:
-                    self.theCursor.execute("INSERT INTO MPPmeas (DateTimeMPP,TrackingAlgo,MeasType,MeasNowType,TrackingDuration,Vstart,Vstep,Delay,PowerEnd,commentmpp,LightDark,IlluminationIntensity,MeasurementLongName,SampleNamePix,linktorawdata,samples_id,batch_id, cells_id,Refdiod_id,PowerEnd) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    self.theCursor.execute("INSERT INTO MPPmeas (DateTimeMPP,TrackingAlgo,MeasType,MeasNowType,TrackingDuration,Vstart,Vstep,Delay,PowerEnd,commentmpp,LightDark,IlluminationIntensity,MeasurementLongName,SampleNamePix,linktorawdata,samples_id,batch_id, cells_id,Refdiode_id,PowerEnd) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                                     (DATA[sample]['datetime'].toString(QtCore.Qt.ISODate).replace('T','-').replace(':','-'),'perturbe&observe',DATA[sample]['MeasType'],DATA[sample]['MeasNowType'],
                                      DATA[sample]['trackingtime'],DATA[sample]['InitialVoltage'],DATA[sample]['initialstep'],DATA[sample]['initialdelay'],
                                      DATA[sample]['power'][-1],DATA[sample]['Comment'],DATA[sample]['illum'],
@@ -1389,9 +1540,117 @@ class Main(QtWidgets.QMainWindow):
         self.SearchAndPlot()
         
     def SearchAndPlot(self):
-        print('searchandplot')
-        #make the search in DB
-        #plot graph
+        
+        criteria=self.ui.comboBox_DBTimeYaxis.currentText()
+        timecrit=self.ui.comboBox_DBTime.currentText()
+        # if criteria.split('.')[0]==timecrit.split('.')[0]:#MPP-MPP or JV-JV
+        #     self.theCursor.execute("SELECT "+timecrit.split('.')[1]+', ' + criteria.split('.')[1]+" FROM "+criteria.split('.')[0])
+        #     results=self.theCursor.fetchall()
+        #     date=[datetime.datetime.strptime(x[0],'%Y-%m-%d-%H-%M-%S') for x in results]
+        #     ydata=[x[1] for x in results]
+        # elif criteria.split('.')[0]=='Refdiode': #JV-Refdiode or MPP-Refdiode
+        #     self.theCursor.execute("SELECT "+timecrit +', ' + criteria +" FROM "+criteria.split('.')[0]+', ' + timecrit.split('.')[0] + ' WHERE Refdiode.id = '+ timecrit.split('.')[0]+'.Refdiode_id')
+        #     results=self.theCursor.fetchall()
+        #     date=[datetime.datetime.strptime(x[0],'%Y-%m-%d-%H-%M-%S') for x in results]
+        #     ydata=[x[1] for x in results]
+            
+        # self.DBgraph.clear()
+        # self.DBgraph.plot(date,ydata,'o')
+        # self.DBgraph.set_xlabel('Date/Time')
+        # self.DBgraph.set_ylabel(criteria.split('.')[1])
+        # for tick in self.DBgraph.get_xticklabels():
+        #     tick.set_rotation(15)
+        # self.fig4.canvas.draw()
+        # self.fig4.canvas.flush_events()
+        
+        
+        items = []
+        for index in range(self.ui.listWidget_DBTime_chosenRestrictions.count()):
+             items.append(self.ui.listWidget_DBTime_chosenRestrictions.item(index).text()) 
+             
+        criteriaListdetailled=[]
+        criteriaListdetailled2=[]
+        for item in items:
+            if len(item.split('__'))==2:
+                criteriaListdetailled.append([item.split('__')[0],[item.split('__')[1]]])
+            elif len(item.split('__'))==3:
+                criteriaListdetailled2.append([item.split('__')[0],item.split('__')[1],item.split('__')[2]])
+        
+             
+        #get the from
+             
+        #get where: list of id matches
+        #get where: from listbox, blabla = blabli or ...
+        #get where: from fromto, (blabla between ll and ll) and ...
+        parameterList=[timecrit,criteria]
+        parametertables=list(set([x.split('.')[0] for x in parameterList]))
+        parametertables=sorted(parametertables, key=lambda s: s.casefold())
+        criteriaList=[x.split('__')[0] for x in items]
+        tablenames=list(set(["batch","samples"]+[timecrit.split('.')[0],criteria.split('.')[0]]+[x.split('.')[0] for x in criteriaList]))
+        # print(items)
+        # print(criteriaList)
+        # print(tablenames)
+        
+        if criteria.split('.')[0]==timecrit.split('.')[0]:
+            SelectInstructions="SELECT "+timecrit +', ' + criteria +" FROM "#+criteria.split('.')[0] + ',samples, batch, cells WHERE '
+            for item in tablenames:
+                SelectInstructions+=item+', '
+            SelectInstructions=SelectInstructions[:-2]+" WHERE "
+            wherelist=[criteria.split('.')[0]]
+        else:
+            SelectInstructions="SELECT "+timecrit +', ' + criteria +" FROM "#+criteria.split('.')[0]+', ' + timecrit.split('.')[0] + ', samples, batch, cells WHERE '
+            for item in tablenames:
+                SelectInstructions+=item+', '
+            SelectInstructions=SelectInstructions[:-2]+" WHERE "
+            wherelist=[criteria.split('.')[0]]
+             
+        items+=[criteria.split('.')[0],timecrit.split('.')[0]]
+        # print(items)
+        # criteriaList=[self.listWidget2.item(i).text() for i in range(self.listWidget2.count())]
+        
+        # tablenames=list(set(["batch","samples","cells"]+[x.split('.')[0] for x in items]))
+        # tablenames=list(set([x.split('.')[0] for x in items]))
+        # print(tablenames)
+        wherelist=["samples.batch_id = batch.id AND "]
+        # wherelist=[]
+        for item in tablenames:
+            self.theCursor.execute("SELECT * FROM "+item)
+            headcol=[x[0] for x in self.theCursor.description]  
+            headcol=[x[:-3] for x in headcol if '_id' in x] 
+            # print(headcol)
+            for item2 in headcol:
+                if item2 in tablenames:
+                    wherelist.append(item+'.'+item2+'_id = '+item2+'.id AND ')
+        wherelist=list(set(wherelist))
+        # print(wherelist)
+        for item in wherelist:
+            SelectInstructions+=item
+        for item in criteriaListdetailled:
+            SelectInstructions+='('
+            for item2 in item[1]:
+                SelectInstructions+= item[0]+' = '+"'"+str(item2)+"' OR "
+            SelectInstructions=SelectInstructions[:-4]+') AND '
+        for item in criteriaListdetailled2:
+            SelectInstructions+= '('+item[0] + ' BETWEEN ' + item[1] + ' AND ' + item[2] +') AND '
+        
+        # print(SelectInstructions[:-4])
+        self.theCursor.execute(SelectInstructions[:-4])
+        data=self.theCursor.fetchall()
+        
+        date=[datetime.datetime.strptime(x[0],'%Y-%m-%d-%H-%M-%S') for x in data]
+        ydata=[x[1] for x in data]
+             
+        self.DBgraph.clear()
+        self.DBgraph.plot(date,ydata,'o')
+        self.DBgraph.set_xlabel('Date/Time')
+        self.DBgraph.set_ylabel(criteria.split('.')[1])
+        for tick in self.DBgraph.get_xticklabels():
+            tick.set_rotation(15)
+        self.fig4.canvas.draw()
+        self.fig4.canvas.flush_events()
+        
+        # print(data)
+        # print('')
 
 #%%######################################################################################################    
     def UpdateTable(self, listdata):
