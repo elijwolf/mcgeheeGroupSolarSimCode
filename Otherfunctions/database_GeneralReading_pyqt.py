@@ -17,9 +17,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
-import tkinter as tk
-from tkinter import messagebox, Entry, Button, Toplevel, OptionMenu, Frame, StringVar, Listbox
-from tkinter import filedialog
 
 #%%######################################################################################################
 

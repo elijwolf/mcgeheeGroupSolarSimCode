@@ -16,6 +16,7 @@ matplotlib.use("Qt5Agg")
 #%%######################################################################################################
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5 import QtTest
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 # from PyQt5.QtCore.QElapsedTimer import timer
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QAction, QTableWidgetItem
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -147,7 +148,7 @@ class Main(QtWidgets.QMainWindow):
         
         self.ui.pushButton_OpenCloseShutter.clicked.connect(lambda: self.opencloseshutter(self.keithleyObject))
     
-        self.ui.pushButton_StartMeas.clicked.connect(lambda: self.StartMeas(self.keithleyObject))
+        self.ui.pushButton_StartMeas.clicked.connect(self.InitMeas)
         
         self.ui.pushButton_cleargraph.clicked.connect(lambda: self.ClearGraph(0))
         
@@ -296,9 +297,158 @@ class Main(QtWidgets.QMainWindow):
         
         for sample in sampleselected:
             self.Savedata(sample,AllDATA)
+    
+    def InitMeas(self):
         
+        if self.ui.checkBox_threaded.isChecked():
+            print('threaded')
+            self.StartMeasThreaded(self.keithleyObject)
+        else:
+            print('not threaded')
+            self.StartMeas(self.keithleyObject)
+            
+    def StartMeasThreaded(self, keithleyObject):
+        global aftermpp,boxCurrent, boxVoltage, RefDiodeChecked, STOPMEAS, shutteropen,lastmeastrackingDATA, lastmeasDATA, Sunintensity
+        # print('startmeas')
+        self.ui.pushButton_StartMeas.setEnabled(False)
+        STOPMEAS=0
+        aftermpp=0
+        lastmeasDATA={}
+        lastmeastrackingDATA={}
+        self.ClearGraph(1)
+        self.ClearTable()
         
-    def StartMeas(self, keithleyObject):
+        ########
+        Assume1suncheck=0
+        if not self.ui.radioButton_Assume1sun.isChecked() and not RefDiodeChecked:
+            Assume1suncheck=self.Popup_CheckDiode()
+        go=0
+        
+        if Assume1suncheck =='User ignores request for ref meas' or self.ui.radioButton_Assume1sun.isChecked():
+            Sunintensity=1
+            go=1
+        if go or RefDiodeChecked:
+            if RefDiodeChecked and not self.ui.radioButton_Assume1sun.isChecked():
+                Sunintensity=self.ui.doubleSpinBox_NumbSun.value()
+        
+            ########
+            
+            for i in range(self.ui.spinBox_RepNumb.value()):
+                # print('Sequence #'+str(i+1))
+                
+                self.sequence = str(self.ui.comboBox_MeasType.currentText())
+                
+                pixels=[]
+                pixcolorslist=[]
+                Allpixels=['A','B','C','D','E','F']
+                allpixcolors=['black','red','blue','green','cyan','magenta']
+                if self.ui.radioButton_pixAll.isChecked():
+                    pixels=Allpixels
+                    pixcolorslist=allpixcolors
+                else:
+                    checkboxlist=[self.ui.checkBox_pixA.isChecked(),self.ui.checkBox_pixB.isChecked(),
+                                  self.ui.checkBox_pixC.isChecked(),self.ui.checkBox_pixD.isChecked(),
+                                  self.ui.checkBox_pixE.isChecked(),self.ui.checkBox_pixF.isChecked()]
+                    for item in range(6):
+                        if checkboxlist[item]:
+                            pixels.append(Allpixels[item])
+                            pixcolorslist.append(allpixcolors[item])
+                            
+                if self.ui.comboBox_JVscandirection.currentText()=="Reverse + Forward":
+                    scandirections=[0,1]
+                elif self.ui.comboBox_JVscandirection.currentText()=="Forward + Reverse":
+                    scandirections=[1,0]
+                elif self.ui.comboBox_JVscandirection.currentText()=="Reverse":
+                    scandirections=[0]
+                elif self.ui.comboBox_JVscandirection.currentText()=="Forward":
+                    scandirections=[1]
+                    
+                self.launchSequence(keithleyObject, pixels, pixcolorslist, scandirections, i)
+                    
+                if self.ui.spinBox_RepNumb.value()>1:
+                    QtTest.QTest.qWait(self.ui.spinBox_RepDelay.value())
+                    
+    def launchSequence(self, keithleyObject, pixels, pixcolorslist, scandirections, Rep):
+        global aftermpp,boxCurrent, boxVoltage, RefDiodeChecked, STOPMEAS, shutteropen,lastmeastrackingDATA, lastmeasDATA, Sunintensity
+        
+        if self.sequence=='':
+            QMessageBox.information(self,'Finished', 'The sequence is finished.')         
+            self.ui.pushButton_StartMeas.setEnabled(True)
+        elif self.sequence.split('-')[0]=='LIV':
+            print('liv')
+            self.sequence=self.sequence[4:]
+            self.shutter('OpenShutter',keithleyObject)
+            QtTest.QTest.qWait(self.ui.doubleSpinBox_JVdelayshutter.value())
+            self.PlotIVThreaded(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
+            
+        elif self.sequence.split('-')[0]=='DIV':
+            print('div')
+            self.sequence=self.sequence[4:]
+            self.shutter('CloseShutter',keithleyObject)
+            self.PlotIVThreaded(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
+            
+        elif self.sequence.split('-')[0]=='MPPT':
+            print('MPPT')
+            self.sequence=self.sequence[5:]
+            if self.ui.checkBox_MPPTlighton.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+                
+            self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, scandirections, Rep)
+            
+            if self.ui.checkBox_MPPTlightonafter.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+            aftermpp=1
+            self.launchSequence(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
+        elif self.sequence.split('-')[0]=='FixedVoltage':
+            print('FixedVoltage')
+            self.sequence=self.sequence[13:]
+            if self.ui.checkBox_MPPTlighton.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+            
+            self.Tracking(keithleyObject,'FixedVoltage', pixels, pixcolorslist, scandirections, Rep)
+            
+            if self.ui.checkBox_MPPTlightonafter.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+            self.launchSequence(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
+        elif self.sequence.split('-')[0]=='FixedCurrent':
+            print('FixedCurrent')
+            self.sequence=self.sequence[13:]
+            if self.ui.checkBox_MPPTlighton.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+                
+            self.Tracking(keithleyObject,'FixedCurrent', pixels, pixcolorslist, scandirections, Rep)
+            
+            if self.ui.checkBox_MPPTlightonafter.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+            self.launchSequence(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
+        elif self.sequence.split('-')[0]=='bestpixMPPT':
+            print('bestpixMPPT')
+            self.sequence=self.sequence[12:]
+            if self.ui.checkBox_MPPTlighton.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+            self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, scandirections, Rep)
+            
+            if self.ui.checkBox_MPPTlightonafter.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+            self.launchSequence(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
+        
+    def StartMeas(self, keithleyObject):#if not threaded
         global aftermpp,boxCurrent, boxVoltage, RefDiodeChecked, STOPMEAS, shutteropen,lastmeastrackingDATA, lastmeasDATA, Sunintensity
         # print('startmeas')
         self.ui.pushButton_StartMeas.setEnabled(False)
@@ -760,6 +910,170 @@ class Main(QtWidgets.QMainWindow):
                 break
         self.loadtoDB('MPP',lastmeasDATA,lastmeastrackingDATA) 
         
+    def PlotIVThreaded(self, keithleyObject, pixels, pixcolorslist, scandirections, Rep):
+        global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
+        global aftermpp,boxCurrent, boxVoltage, keithleyAddress
+        self.pixels=pixels
+        self.pixcolorslist=pixcolorslist
+        self.scandirections=scandirections
+        self.Rep=Rep
+        
+        allpixtobemeasured=''
+        for item in range(len(pixels)):
+            allpixtobemeasured+=pixels[item]
+            allpixtobemeasured+=', '
+        self.allpixtobemeasured=allpixtobemeasured[:-2]
+        
+        year=str(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[0])
+        month=calendar.month_name[int(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[1])]
+        self.directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'SolarSimAllUsersDATA',str(self.ui.lineEdit_UserName.text()),year,month)
+        if not os.path.exists(self.directory):
+            os.makedirs(self.directory)
+            os.chdir(self.directory)
+        else :
+            os.chdir(self.directory)
+        self.keithleyObject=keithleyObject
+        self.thread = ThreadtakeIV(pixels,scandirections, keithleyObject)
+        self.thread.result.connect(self.PlotIVThreadedUpdategraph)
+        self.thread.finished.connect(self.PlotIVThreadedFinished)
+        self.thread.start()
+    
+    def PlotIVThreadedFinished(self):
+        global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
+        global aftermpp,boxCurrent, boxVoltage, keithleyAddress
+        pixels=self.pixels
+        pixcolorslist=self.pixcolorslist
+        scandirections=self.scandirections
+        Rep=self.Rep
+        directory=self.directory
+        allpixtobemeasured=self.allpixtobemeasured
+        keithleyObject=self.keithleyObject
+        print('finished')
+        
+        if shutteropen:
+            self.ClearGraph('LIV')
+        else:
+            self.ClearGraph('DIV')
+        for sampleitem in lastmeasDATA.keys():
+            pixcoloritem=lastmeasDATA[sampleitem]['pixcolor']
+            if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                self.JVgraph.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="dashed",color=pixcoloritem)
+            elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                self.JVgraph.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="solid",color=pixcoloritem)
+            if lastmeasDATA[sampleitem]['illum'] == 'dk':
+                if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                    self.DIVgraphlin.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="dashed",color=pixcoloritem)
+                elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                    self.DIVgraphlin.plot(lastmeasDATA[sampleitem]['Voltage'],lastmeasDATA[sampleitem]['CurrentDensity'], linestyle="solid",color=pixcoloritem)
+                ydataabs=list(map(lambda x: abs(x),lastmeasDATA[sampleitem]['CurrentDensity']))
+                if lastmeasDATA[sampleitem]['ScanDirection'] == 'fwd':#forward scan
+                    self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="dashed",color=pixcoloritem)
+                elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
+                    self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="solid",color=pixcoloritem)
+        # print(lastmeasDATA)
+                    
+        self.loadtoDB('IV',lastmeasDATA,lastmeastrackingDATA) 
+        self.launchSequence(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
+        
+        
+    def PlotIVThreadedUpdategraph(self,data):
+        global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
+        global aftermpp,boxCurrent, boxVoltage, keithleyAddress
+        pixels=self.pixels
+        pixcolorslist=self.pixcolorslist
+        scandirections=self.scandirections
+        Rep=self.Rep
+        directory=self.directory
+        allpixtobemeasured=self.allpixtobemeasured
+        keithleyObject=self.keithleyObject
+        
+        direction=data[0]
+        item=data[1]
+        data=data[2]
+        
+        pixcolor=pixcolorslist[item]
+        
+        # print(data)
+        pixarea=eval('window.w.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
+        currentlist=data[:,1]
+        voltagelist=data[:,0]
+        currentdenlist=[x*1000/pixarea for x in data[:,1]] #assume 1sun, and assume keithley gives Amperes back 
+         
+        if direction == 1:#forward scan 
+            directionstr='fwd' 
+            self.JVgraph.plot(data[:,0],currentdenlist, linestyle="dashed",color=pixcolor) 
+        elif direction == 0:#reverse scan 
+            directionstr='rev' 
+            self.JVgraph.plot(data[:,0],currentdenlist, linestyle="solid",color=pixcolor) 
+        self.fig1.canvas.draw_idle() 
+         
+        if shutteropen: 
+            illum='lt' 
+        else: 
+            illum='dk' 
+        if illum == 'dk': 
+            if direction == 1:#forward scan 
+                self.DIVgraphlin.plot(data[:,0],currentdenlist, linestyle="dashed",color=pixcolor) 
+            elif direction == 0:#reverse scan 
+                self.DIVgraphlin.plot(data[:,0],currentdenlist, linestyle="solid",color=pixcolor) 
+            ydataabs=list(map(lambda x: abs(x),currentdenlist)) 
+            if direction == 1:#forward scan 
+                self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="dashed",color=pixcolor) 
+            elif direction == 0:#reverse scan 
+                self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="solid",color=pixcolor) 
+            self.fig3.canvas.draw_idle() 
+            self.fig3.canvas.flush_events() 
+ 
+        self.fig1.canvas.flush_events() 
+        
+        if shutteropen:
+            illum='lt'
+            # self.ClearGraph('LIV')
+        else:
+            illum='dk'
+            # self.ClearGraph('DIV')
+        
+        if self.ui.radioButton_Assume1sun.isChecked():
+            radioButton_Assume1sun='True'
+        else:
+            radioButton_Assume1sun='False'
+        timestr = QtCore.QDateTime.currentDateTime().toString(QtCore.Qt.ISODate)
+        timestr=timestr.replace(':','').replace('-','')
+
+        sample=str(self.ui.lineEdit_SampleName.text()) +'_'+  'pX'+pixels[item] +'_'+ directionstr +'_'+ illum +'_'+ 'lp'+str(Rep) +'_'+ timestr  
+        samplename=str(self.ui.lineEdit_SampleName.text()).replace('-','_')
+        if '_' in str(self.ui.lineEdit_SampleName.text()):
+            Batch=str(self.ui.lineEdit_SampleName.text()).split('_')[0]
+            Substrate=str(self.ui.lineEdit_SampleName.text()).split('_')[1]
+        else:
+            Batch='None'
+            Substrate='None'
+        
+        commenttext=str(self.ui.lineEdit_Comment.text())
+        if aftermpp:
+            if 'aftermpp' not in commenttext:
+                commenttext+='_aftermpp'
+        
+        AllDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ pixels[item], 
+                          'linktorawdata':str(os.path.join(str(directory),sample+'.txt')),'SampleName': samplename,'Batch#':Batch,'Substrate#':Substrate, 'Pixel':pixels[item], 'Allpixs':allpixtobemeasured,
+                          'ScanDirection': directionstr, 'illum': illum, 'Sunintensity': Sunintensity, 'IsRefDiodeMeasured': RefDiodeChecked, 
+                          'RefDiodeNomCurr':self.ui.doubleSpinBox_DiodeNominalCurrent.value(),'RefDiodeMeasCurr':self.ui.doubleSpinBox_MeasuredDiodeCurrent.value(),
+                          'datetime': QtCore.QDateTime.currentDateTime(), 'Comment': commenttext,'temperature':self.ui.doubleSpinBox_Temperature.value(),
+                          'UserName': str(self.ui.lineEdit_UserName.text()), 'MeasType': str(self.ui.comboBox_MeasType.currentText()),'MeasNowType': 'IV',
+                          'pixcolor':pixcolor,'RepNumb': Rep,'DelayRep':self.ui.spinBox_RepDelay.value(), 'pixelArea': pixarea,'assume1sun':radioButton_Assume1sun,'ShutterOpen':shutteropen,
+                          'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
+                          'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
+                          'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
+                          'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
+                          'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
+                          'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
+                          }
+        lastmeasDATA[sample]=AllDATA[sample]
+
+        self.AnalysisJV(sample)
+        self.Savedata(sample,AllDATA)
+        self.UpdateTable(lastmeasDATA)
+        
     def PlotIV(self, keithleyObject, pixels, pixcolorslist, scandirections, Rep):
         global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
         global aftermpp,boxCurrent, boxVoltage, keithleyAddress
@@ -770,6 +1084,7 @@ class Main(QtWidgets.QMainWindow):
             allpixtobemeasured+=pixels[item]
             allpixtobemeasured+=', '
         allpixtobemeasured=allpixtobemeasured[:-2]
+        self.allpixtobemeasured=allpixtobemeasured
         
         year=str(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[0])
         month=calendar.month_name[int(QtCore.QDate.currentDate().toString(QtCore.Qt.ISODate).split('-')[1])]
@@ -779,7 +1094,6 @@ class Main(QtWidgets.QMainWindow):
             os.chdir(directory)
         else :
             os.chdir(directory)
-            
         for item in range(len(pixels)):
             connectPixel(boxCurrent, boxVoltage, pixels[item])
             pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
@@ -796,13 +1110,13 @@ class Main(QtWidgets.QMainWindow):
             currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
             prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
             for direction in scandirections:
-                # if keithleyAddress=='Test':
-                #     QtTest.QTest.qWait(500)
+                self.direction=direction
+                if keithleyAddress=='Test':
+                    QtTest.QTest.qWait(200)
                 minV=self.ui.doubleSpinBox_JVminvoltage.value()/1000
                 maxV=self.ui.doubleSpinBox_JVmaxvoltage.value()/1000
                 stepV=self.ui.doubleSpinBox_JVstepsize.value()/1000
                 delay=self.ui.doubleSpinBox_JVdelaypoints.value()
-                
                 data=takeIV(keithleyObject, minV,maxV,stepV,delay,direction,NPLC, currentlimit) 
                 currentlist=data[:,1]
                 voltagelist=data[:,0]
@@ -837,10 +1151,10 @@ class Main(QtWidgets.QMainWindow):
                 
                 if shutteropen:
                     illum='lt'
-                    self.ClearGraph('LIV')
+                    # self.ClearGraph('LIV')
                 else:
                     illum='dk'
-                    self.ClearGraph('DIV')
+                    # self.ClearGraph('DIV')
                 
                 if self.ui.radioButton_Assume1sun.isChecked():
                     radioButton_Assume1sun='True'
@@ -864,19 +1178,19 @@ class Main(QtWidgets.QMainWindow):
                         commenttext+='_aftermpp'
                 
                 AllDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ pixels[item], 
-                                 'linktorawdata':str(os.path.join(str(directory),sample+'.txt')),'SampleName': samplename,'Batch#':Batch,'Substrate#':Substrate, 'Pixel':pixels[item], 'Allpixs':allpixtobemeasured,
-                                 'ScanDirection': directionstr, 'illum': illum, 'Sunintensity': Sunintensity, 'IsRefDiodeMeasured': RefDiodeChecked, 
-                                 'RefDiodeNomCurr':self.ui.doubleSpinBox_DiodeNominalCurrent.value(),'RefDiodeMeasCurr':self.ui.doubleSpinBox_MeasuredDiodeCurrent.value(),
-                                 'datetime': QtCore.QDateTime.currentDateTime(), 'Comment': commenttext,'temperature':self.ui.doubleSpinBox_Temperature.value(),
-                                 'UserName': str(self.ui.lineEdit_UserName.text()), 'MeasType': str(self.ui.comboBox_MeasType.currentText()),'MeasNowType': 'IV',
-                                 'pixcolor':pixcolor,'RepNumb': Rep,'DelayRep':self.ui.spinBox_RepDelay.value(), 'pixelArea': pixarea,'assume1sun':radioButton_Assume1sun,'ShutterOpen':shutteropen,
-                                 'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
-                                 'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
-                                 'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
-                                 'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
-                                 'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
-                                 'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
-                                 }
+                                  'linktorawdata':str(os.path.join(str(directory),sample+'.txt')),'SampleName': samplename,'Batch#':Batch,'Substrate#':Substrate, 'Pixel':pixels[item], 'Allpixs':allpixtobemeasured,
+                                  'ScanDirection': directionstr, 'illum': illum, 'Sunintensity': Sunintensity, 'IsRefDiodeMeasured': RefDiodeChecked, 
+                                  'RefDiodeNomCurr':self.ui.doubleSpinBox_DiodeNominalCurrent.value(),'RefDiodeMeasCurr':self.ui.doubleSpinBox_MeasuredDiodeCurrent.value(),
+                                  'datetime': QtCore.QDateTime.currentDateTime(), 'Comment': commenttext,'temperature':self.ui.doubleSpinBox_Temperature.value(),
+                                  'UserName': str(self.ui.lineEdit_UserName.text()), 'MeasType': str(self.ui.comboBox_MeasType.currentText()),'MeasNowType': 'IV',
+                                  'pixcolor':pixcolor,'RepNumb': Rep,'DelayRep':self.ui.spinBox_RepDelay.value(), 'pixelArea': pixarea,'assume1sun':radioButton_Assume1sun,'ShutterOpen':shutteropen,
+                                  'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
+                                  'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
+                                  'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
+                                  'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
+                                  'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
+                                  'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
+                                  }
                 lastmeasDATA[sample]=AllDATA[sample]
 
                 self.AnalysisJV(sample)
@@ -1712,7 +2026,149 @@ class Main(QtWidgets.QMainWindow):
             self.MPPTgraph_TP.set_ylabel('Power (W/m'+'\xb2'+')')
             self.fig2.canvas.draw_idle()
 
+    def updateJVaftermeas(self,data):
+        global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
+        global aftermpp,boxCurrent, boxVoltage, keithleyAddress
+        print('scan finished')
+        pixcolor=self.pixcolor
+        direction=self.direction
+        pixels=self.pixels
+        Rep=self.Rep
+        directory=self.directory
+        allpixtobemeasured=self.allpixtobemeasured
+        currentlist=data[:,1]
+        voltagelist=data[:,0]
+        currentdenlist=[x*1000/self.pixarea for x in data[:,1]] #assume 1sun, and assume keithley gives Amperes back 
+         
+        if direction == 1:#forward scan 
+            directionstr='fwd' 
+            self.JVgraph.plot(data[:,0],currentdenlist, linestyle="dashed",color=pixcolor) 
+        elif direction == 0:#reverse scan 
+            directionstr='rev' 
+            self.JVgraph.plot(data[:,0],currentdenlist, linestyle="solid",color=pixcolor) 
+        self.fig1.canvas.draw_idle() 
+         
+        if shutteropen: 
+            illum='lt' 
+        else: 
+            illum='dk' 
+        if illum == 'dk': 
+            if direction == 1:#forward scan 
+                self.DIVgraphlin.plot(data[:,0],currentdenlist, linestyle="dashed",color=pixcolor) 
+            elif direction == 0:#reverse scan 
+                self.DIVgraphlin.plot(data[:,0],currentdenlist, linestyle="solid",color=pixcolor) 
+            ydataabs=list(map(lambda x: abs(x),currentdenlist)) 
+            if direction == 1:#forward scan 
+                self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="dashed",color=pixcolor) 
+            elif direction == 0:#reverse scan 
+                self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="solid",color=pixcolor) 
+            self.fig3.canvas.draw_idle() 
+            self.fig3.canvas.flush_events() 
+ 
+        self.fig1.canvas.flush_events() 
+        
+        if shutteropen:
+            illum='lt'
+            self.ClearGraph('LIV')
+        else:
+            illum='dk'
+            self.ClearGraph('DIV')
+        
+        if self.ui.radioButton_Assume1sun.isChecked():
+            radioButton_Assume1sun='True'
+        else:
+            radioButton_Assume1sun='False'
+        timestr = QtCore.QDateTime.currentDateTime().toString(QtCore.Qt.ISODate)
+        timestr=timestr.replace(':','').replace('-','')
+
+        sample=str(self.ui.lineEdit_SampleName.text()) +'_'+  'pX'+self.currentpixelmeasured +'_'+ directionstr +'_'+ illum +'_'+ 'lp'+str(Rep) +'_'+ timestr  
+        samplename=str(self.ui.lineEdit_SampleName.text()).replace('-','_')
+        if '_' in str(self.ui.lineEdit_SampleName.text()):
+            Batch=str(self.ui.lineEdit_SampleName.text()).split('_')[0]
+            Substrate=str(self.ui.lineEdit_SampleName.text()).split('_')[1]
+        else:
+            Batch='None'
+            Substrate='None'
+        
+        commenttext=str(self.ui.lineEdit_Comment.text())
+        if aftermpp:
+            if 'aftermpp' not in commenttext:
+                commenttext+='_aftermpp'
+        
+        AllDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ self.currentpixelmeasured, 
+                         'linktorawdata':str(os.path.join(str(directory),sample+'.txt')),'SampleName': samplename,'Batch#':Batch,'Substrate#':Substrate, 'Pixel':self.currentpixelmeasured, 'Allpixs':allpixtobemeasured,
+                         'ScanDirection': directionstr, 'illum': illum, 'Sunintensity': Sunintensity, 'IsRefDiodeMeasured': RefDiodeChecked, 
+                         'RefDiodeNomCurr':self.ui.doubleSpinBox_DiodeNominalCurrent.value(),'RefDiodeMeasCurr':self.ui.doubleSpinBox_MeasuredDiodeCurrent.value(),
+                         'datetime': QtCore.QDateTime.currentDateTime(), 'Comment': commenttext,'temperature':self.ui.doubleSpinBox_Temperature.value(),
+                         'UserName': str(self.ui.lineEdit_UserName.text()), 'MeasType': str(self.ui.comboBox_MeasType.currentText()),'MeasNowType': 'IV',
+                         'pixcolor':pixcolor,'RepNumb': Rep,'DelayRep':self.ui.spinBox_RepDelay.value(), 'pixelArea': self.pixarea,'assume1sun':radioButton_Assume1sun,'ShutterOpen':shutteropen,
+                         'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
+                         'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
+                         'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
+                         'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
+                         'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
+                         'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
+                         }
+        lastmeasDATA[sample]=AllDATA[sample]
+
+        self.AnalysisJV(sample)
+        self.Savedata(sample,AllDATA)
+        self.UpdateTable(lastmeasDATA)
+
+class ThreadtakeIV(QThread):
+    
+    result = pyqtSignal(object)
+    finished = pyqtSignal()
+    
+    def __init__(self, pixels, scandirections, keithleyObject, parent=None):
+        QThread.__init__(self, parent)
+        self.pixels = pixels
+        self.scandirections=scandirections
+        self.keithleyObject=keithleyObject
+        
+    def run(self):
+        global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
+        global aftermpp,boxCurrent, boxVoltage, keithleyAddress
+        # print('scan')
+
+        for item in range(len(self.pixels)):
+            connectPixel(boxCurrent, boxVoltage, self.pixels[item])
             
+            integtime=window.w.ui.doubleSpinBox_JVintegrationtime.value()
+            # NPLC of 1 with 60Hz power, new value every 16.67ms
+            # integtime=50ms => NPLC = .050*60 = 3
+            NPLC=integtime*60/1000
+            if NPLC>10:
+                NPLC=10
+            if NPLC<0.01:
+                NPLC=0.01
+            currentlimit=window.w.ui.doubleSpinBox_JVcurrentlimit.value()
+            prepareCurrent(self.keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
+            for direction in self.scandirections:
+                minV=window.w.ui.doubleSpinBox_JVminvoltage.value()/1000
+                maxV=window.w.ui.doubleSpinBox_JVmaxvoltage.value()/1000
+                stepV=window.w.ui.doubleSpinBox_JVstepsize.value()/1000
+                delay=window.w.ui.doubleSpinBox_JVdelaypoints.value()
+
+                data=takeIV(self.keithleyObject, minV,maxV,stepV,delay,direction,NPLC, currentlimit) 
+                data=[direction,item,data]
+                self.result.emit(data)
+                
+                if keithleyAddress=='Test':
+                    QtTest.QTest.qWait(1000)
+                
+                if STOPMEAS==1:
+                    break
+            if STOPMEAS==1:
+                break
+            
+        self.finished.emit()
+        
+        
+        
+        
+        
+        
     
 #%%######################################################################################################
 class Window(QtWidgets.QDialog):
@@ -1786,7 +2242,13 @@ class Window(QtWidgets.QDialog):
         self.w = Main()
         self.w.show()
         self.hide()
+        
+    
 
+    
+    
+    
+    
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = Window()
