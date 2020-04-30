@@ -176,7 +176,7 @@ def closeShutter(keithleyObject):
 		return
 	keithleyObject.write('SOUR2:TTL {:d}'.format(0b0000))
 
-def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=0.01, forw=1, NPLC = 1, Ilimit=100E-3):
+def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=10, forw=1, NPLC = 1, Ilimit=100E-3):
 	'''
 	This takes an IV sweep. startV must be less than stopV.
 	Returns an (n,5) numpy array.
@@ -186,6 +186,7 @@ def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=0.01, forw=1, N
 	See Keithley manual for the explanatoin of the value of status.
 	NPLC Range [0.01,10]
 	'''
+	delay = delay/1000 # convert delay from ms to seconds
 	if not forw:
 		startV, stopV = maxV, minV
 		stepV *= -1
@@ -288,7 +289,7 @@ if __name__ == "__main__":
 	#This section of code tests the takeIV function and plots it.
 	openShutter(keithley)
 	# data = takeIV(keithley, NPLC = 0.01)
-	data = takeIV(keithley,-0.2,1.2,0.02,0.01,0,1) 
+	data = takeIV(keithley,-0.2,1.2,0.02,0.01,0,1,100e-3) 
 	# print (type(data))
 	# print (data.shape)
 	# print (type(data[0]))

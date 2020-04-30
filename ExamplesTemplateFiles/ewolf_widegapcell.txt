@@ -13,10 +13,10 @@ minvoltage	-200.0
 maxvoltage	1200.0
 JVstepsize	20.0
 currentlimit	0.1
-integtime	50.0
-delaypoints	50.0
+integtime	10.0
+delaypoints	10.0
 delayshutter	100.0
-scandirection	Reverse + Forward
+scandirection	Reverse
 
 startvoltage	500.0
 MPPTstepsize	5
@@ -26,15 +26,15 @@ lighton	True
 keeplightafter	True
 
 PixelA	True
-PixelB	True
-PixelC	True
-PixelD	True
-PixelE	True
-PixelF	True
+PixelB	False
+PixelC	False
+PixelD	False
+PixelE	False
+PixelF	False
 A-area	0.06
 B-area	0.06
 C-area	0.06
 D-area	0.06
 E-area	0.06
 F-area	0.06
-Allpix	True
+Allpix	False

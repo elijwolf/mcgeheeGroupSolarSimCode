@@ -74,6 +74,24 @@ weird empty lines in table
 
 The delay between steps is not saved when saving and loading a configuration
 
+NOTES FROM ELI:
+- The delay between steps is not saved when saving and loading a configuration
+
+- when taking a measurement, if the measurement sequence has 1 curve, then the program finishes the measurement but never plots
+- if the measurement involves 2 curves, then the program crashes with the following traceback
+
+Traceback (most recent call last):
+  File "C:\\Users\\Eli Wolf\\gitKraken\\labCode\\Main.py", line 978, in PlotIVThreadedFinished
+    self.loadtoDB('IV',lastmeasDATA,lastmeastrackingDATA) 
+  File "C:\\Users\\Eli Wolf\\gitKraken\\labCode\\Main.py", line 1756, in loadtoDB
+    samples_id_exists,batch_id_exists,cells_id_exists,refdiode_id_exists,))
+sqlite3.OperationalError: table JVmeas has no column named Refdiode_id
+
+- if i test this with the simulated keithley, then the program crashes after any type of measurement
+
+- if i run just a single sweep so that the program does not crash, attempting to measure intensity results in an infinite loop of measuring intensity that never stops
+- if i run a single sweep, the sweep is not plotted, but can be plotted after the measurement manually by first selecting the single measurement from the table and selecting load selected curves from table, selecting plot all from table does not work
+
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
