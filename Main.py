@@ -2169,11 +2169,6 @@ class ThreadtakeIV(QThread):
         self.finished.emit()
         
         
-        
-        
-        
-        
-    
 #%%######################################################################################################
 class Window(QtWidgets.QDialog):
     def __init__(self):
@@ -2235,22 +2230,17 @@ class Window(QtWidgets.QDialog):
         import pyDAQNavi as pDN
         boxCurrent = pDN.DeviceObject('USB-4761,BID#0')
         boxVoltage = pDN.DeviceObject('USB-4761,BID#1')
-        keithleyAddress='GPIB0::22::INSTR'   
+        keithleyAddress='GPIB0::22::INSTR'
 
         self.w = Main()
         self.w.show()
         self.hide()
         
-    def MainSimul(self):   
+    def MainSimul(self):
 
         self.w = Main()
         self.w.show()
         self.hide()
-        
-    
-
-    
-    
     
     
 if __name__ == "__main__":
