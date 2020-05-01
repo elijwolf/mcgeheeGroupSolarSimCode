@@ -52,19 +52,7 @@ boxCurrent = 'test'
 boxVoltage = 'test'
 keithleyAddress='Test'
 #%%######################################################################################################
-"""  
-                                                                      
-
-database to store all data generated on that solar simulator
-make interface to explore the database in the same software in a third panel for the database reading/searching
-
-
-AllDATA list with all data of the session, lastmeasDATA
-so by default plot and table have only the data of the last measurement sequence.
-but user could bring back all the measured cells from the entire session back up and plot selected samples...
-we could implement the analysis directly in this program with histogram graphs and boxplots... 
-
-
+"""
 need to check all units in all function measuring data from keithley
 
 sequence builder: so user can define himself the sequence of dark, light, mpp... same as done for Jay
@@ -72,10 +60,8 @@ sequence builder: so user can define himself the sequence of dark, light, mpp...
 
 weird empty lines in table
 
-The delay between steps is not saved when saving and loading a configuration
 
 NOTES FROM ELI:
-- The delay between steps is not saved when saving and loading a configuration
 
 - when taking a measurement, if the measurement sequence has 1 curve, then the program finishes the measurement but never plots
 - if the measurement involves 2 curves, then the program crashes with the following traceback

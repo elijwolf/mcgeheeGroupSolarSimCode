@@ -44,8 +44,9 @@ def LoadParamTemplate(self):
                 self.ui.doubleSpinBox_JVcurrentlimit.setValue(float(line.split('\t')[1]))
             elif 'integtime' in line:
                 self.ui.doubleSpinBox_JVintegrationtime.setValue(float(line.split('\t')[1]))
-            elif 'delaypoints' in line:
+            elif 'JVdelaypoints' in line:
                 self.ui.doubleSpinBox_JVdelaypoints.setValue(float(line.split('\t')[1]))
+                print(float(line.split('\t')[1]))
             elif 'delayshutter' in line:
                 self.ui.doubleSpinBox_JVdelayshutter.setValue(float(line.split('\t')[1]))
             elif 'scandirection' in line:
@@ -138,7 +139,7 @@ def SaveParamTemplate(self):
         radioButton_Assume1sun='False'
         
     directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'ExamplesTemplateFiles')
-    
+    print(str(self.ui.doubleSpinBox_JVdelaypoints.value()))
     fname = QFileDialog.getSaveFileName(self, 'Save file', directory,"Text files (*.txt)")
     with open(fname[0],'w') as file:
         text='UserName\t'+ str(self.ui.lineEdit_UserName.text())+'\n'+\
@@ -157,7 +158,7 @@ def SaveParamTemplate(self):
             'JVstepsize\t'+ str(self.ui.doubleSpinBox_JVstepsize.value())+'\n'+\
             'currentlimit\t'+ str(self.ui.doubleSpinBox_JVcurrentlimit.value())+'\n'+\
             'integtime\t'+ str(self.ui.doubleSpinBox_JVintegrationtime.value())+'\n'+\
-            'delaypoints\t'+ str(self.ui.doubleSpinBox_JVdelaypoints.value())+'\n'+\
+            'JVdelaypoints\t'+ str(self.ui.doubleSpinBox_JVdelaypoints.value())+'\n'+\
             'delayshutter\t'+ str(self.ui.doubleSpinBox_JVdelayshutter.value())+'\n'+\
             'scandirection\t'+ str(self.ui.comboBox_JVscandirection.currentText())+'\n'+\
             '\n'+\

@@ -14,7 +14,7 @@ maxvoltage	1200.0
 JVstepsize	20.0
 currentlimit	0.1
 integtime	50.0
-delaypoints	100.0
+JVdelaypoints	50.0
 delayshutter	100.0
 scandirection	Reverse + Forward
 
