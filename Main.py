@@ -63,21 +63,6 @@ weird empty lines in table
 
 NOTES FROM ELI:
 
-- when taking a measurement, if the measurement sequence has 1 curve, then the program finishes the measurement but never plots
-- if the measurement involves 2 curves, then the program crashes with the following traceback
-
-Traceback (most recent call last):
-  File "C:\\Users\\Eli Wolf\\gitKraken\\labCode\\Main.py", line 978, in PlotIVThreadedFinished
-    self.loadtoDB('IV',lastmeasDATA,lastmeastrackingDATA) 
-  File "C:\\Users\\Eli Wolf\\gitKraken\\labCode\\Main.py", line 1756, in loadtoDB
-    samples_id_exists,batch_id_exists,cells_id_exists,refdiode_id_exists,))
-sqlite3.OperationalError: table JVmeas has no column named Refdiode_id
-
-- if i test this with the simulated keithley, then the program crashes after any type of measurement
-
-- if i run just a single sweep so that the program does not crash, attempting to measure intensity results in an infinite loop of measuring intensity that never stops
-- if i run a single sweep, the sweep is not plotted, but can be plotted after the measurement manually by first selecting the single measurement from the table and selecting load selected curves from table, selecting plot all from table does not work
-
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
@@ -974,7 +959,6 @@ class Main(QtWidgets.QMainWindow):
                     self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="dashed",color=pixcoloritem)
                 elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
                     self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="solid",color=pixcoloritem)
-        # print(lastmeasDATA)
                     
         self.loadtoDB('IV',lastmeasDATA,lastmeastrackingDATA) 
         self.launchSequence(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
@@ -1010,6 +994,7 @@ class Main(QtWidgets.QMainWindow):
             directionstr='rev' 
             self.JVgraph.plot(data[:,0],currentdenlist, linestyle="solid",color=pixcolor) 
         self.fig1.canvas.draw_idle() 
+        self.fig1.canvas.flush_events()
          
         if shutteropen: 
             illum='lt' 
@@ -1027,15 +1012,6 @@ class Main(QtWidgets.QMainWindow):
                 self.DIVgraphlogY.semilogy(data[:,0],ydataabs, linestyle="solid",color=pixcolor) 
             self.fig3.canvas.draw_idle() 
             self.fig3.canvas.flush_events() 
- 
-        self.fig1.canvas.flush_events() 
-        
-        if shutteropen:
-            illum='lt'
-            # self.ClearGraph('LIV')
-        else:
-            illum='dk'
-            # self.ClearGraph('DIV')
         
         if self.ui.radioButton_Assume1sun.isChecked():
             radioButton_Assume1sun='True'
@@ -2154,18 +2130,21 @@ class ThreadtakeIV(QThread):
                 stepV=window.w.ui.doubleSpinBox_JVstepsize.value()/1000
                 delay=window.w.ui.doubleSpinBox_JVdelaypoints.value()
 
-                data=takeIV(self.keithleyObject, minV,maxV,stepV,delay,direction,NPLC, currentlimit) 
-                data=[direction,item,data]
-                self.result.emit(data)
-                
+                data=takeIV(self.keithleyObject, minV,maxV,stepV,delay,direction,NPLC, currentlimit)
+
                 if keithleyAddress=='Test':
                     QtTest.QTest.qWait(1000)
                 
+                data=[direction,item,data]
+                self.result.emit(data)
+                                
                 if STOPMEAS==1:
                     break
             if STOPMEAS==1:
                 break
             
+
+        QtTest.QTest.qWait(10) # if this is not here, then the finished signal function finishes before the result signal function finishes, causing plotting problems
         self.finished.emit()
         
         
