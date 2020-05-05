@@ -5,7 +5,7 @@ from PyQt5 import QtTest
 
 #####TO-DO#####
 '''
-- find out if you can use wait_for_srq or wai
+- find out if you can use wait_for_srq or wai*
 - determine Digital Output configuration required to open and close the shutter. The functions currently work, but the output configuration is a guess.
 '''
 ###############
@@ -75,6 +75,7 @@ def prepareVoltage(keithleyObject, NPLC=1, voltlimit = 10):
 	'''
 	if keithleyObject == 'Test':
 		return
+	# keithleyObject.write('*RST')
 	keithleyObject.write('SOUR:FUNC CURR')
 	keithleyObject.write('SOUR:CURR:MODE FIXED')
 	keithleyObject.write('SOUR:CURR:RANG:AUTO ON')
@@ -118,6 +119,7 @@ def prepareCurrent(keithleyObject, NPLC=1, currentlimit=1e-2):
 	'''
 	if keithleyObject == 'Test':
 		return
+	keithleyObject.write('*RST')
 	keithleyObject.write('SOUR:FUNC VOLT')
 	keithleyObject.write('SOUR:VOLT:MODE FIXED')
 	keithleyObject.write('SOUR:VOLT:RANG:AUTO ON')
@@ -213,6 +215,7 @@ def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=10, forw=1, NPL
 
 	n = round(1 + (stopV - startV) /stepV)
 	keithleyObject.timeout = 100000
+	keithleyObject.write('*RST')
 	keithleyObject.write('SOUR:FUNC VOLT')
 	keithleyObject.write('SOUR:VOLT:STAR {:.3f}'.format(startV))
 	keithleyObject.write('SOUR:VOLT:STOP {:.3f}'.format(stopV))
@@ -251,17 +254,17 @@ if __name__ == "__main__":
 # 	openShutter(keithley)
 # 	closeShutter(keithley)
 
-# 	prepareCurrent(keithley, NPLC = 2)
-# 	dataCurrent = measureCurrent(keithley,voltage=0.001,n=10)
-# 	# print (type(dataCurrent))
-# 	# print (dataCurrent.shape)
-# 	# print (type(dataCurrent[0]))
-# 	# print (dataCurrent[0].shape)
-# 	# print (type(dataCurrent[0][0]))
-# 	# print (type(dataCurrent[0][1]))
-# 	# print (type(dataCurrent[0][2]))
-# 	# print (type(dataCurrent[0][3]))
-# 	# print (type(dataCurrent[0][4]))
+	prepareCurrent(keithley, NPLC = 2)
+	dataCurrent = measureCurrent(keithley,voltage=0.001,n=10)
+	# print (type(dataCurrent))
+	# print (dataCurrent.shape)
+	# print (type(dataCurrent[0]))
+	# print (dataCurrent[0].shape)
+	# print (type(dataCurrent[0][0]))
+	# print (type(dataCurrent[0][1]))
+	# print (type(dataCurrent[0][2]))
+	# print (type(dataCurrent[0][3]))
+	# print (type(dataCurrent[0][4]))
 
 # 	prepareVoltage(keithley)
 # 	dataVoltage = measureVoltage(keithley,current=0.001,n=9)
@@ -332,6 +335,7 @@ if __name__ == "__main__":
 	# plt.plot(volt,e, label = 'Status')
 
 	# plt.plot(voltDark,currentDark, label = 'Dark')
-	
+	prepareCurrent(keithley, NPLC = 2)
+	dataCurrent = measureCurrent(keithley,voltage=0.001,n=10)
 	shutdownKeithley(keithley)
 	plt.show()
