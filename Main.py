@@ -1647,7 +1647,7 @@ class Main(QtWidgets.QMainWindow):
                 '#MPPT data\n'+\
                 'Time\tPower\tVoltage\tCurrentDensity\tCurrent\tStep\tDelay\n'
             for i in range(len(DATA[sample]['Voltage'])):
-                text+=str(DATA[sample]['time'][i])+'\t'+str(DATA[sample]['power'][i])+'\t'+str(DATA[sample]['Voltage'][i])+'\t'+str(DATA[sample]['CurrentDensity'][i])+str(DATA[sample]['Current'][i])+'\t'+str(DATA[sample]['step'][i])+'\t'+str(DATA[sample]['delay'][i])+'\n'
+                text+=str(DATA[sample]['time'][i])+'\t'+str(DATA[sample]['power'][i])+'\t'+str(DATA[sample]['Voltage'][i])+'\t'+str(DATA[sample]['CurrentDensity'][i])+'\t'+str(DATA[sample]['Current'][i])+'\t'+str(DATA[sample]['step'][i])+'\t'+str(DATA[sample]['delay'][i])+'\n'
             with open(DATA[sample]['sampleID']+'.txt','w') as file:
                 file.write(text)
 
