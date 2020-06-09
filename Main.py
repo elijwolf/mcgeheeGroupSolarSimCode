@@ -23,8 +23,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 #%%######################################################################################################
+from PyQt5.uic import loadUiType
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'GUIfiles'))
-from gui import Ui_MainWindow  #need to comment out all lines containing "PlaceholderText"
+Ui_MainWindow, QMainWindow = loadUiType('GUIfiles\gui.ui')
 from loadingsavingtemplate import LoadParamTemplate, SaveParamTemplate
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'Keithley Code'))
