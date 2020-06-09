@@ -959,7 +959,12 @@ class Main(QtWidgets.QMainWindow):
                     self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="dashed",color=pixcoloritem)
                 elif lastmeasDATA[sampleitem]['ScanDirection'] == 'rev':#reverse scan
                     self.DIVgraphlogY.semilogy(lastmeasDATA[sampleitem]['Voltage'],ydataabs, linestyle="solid",color=pixcoloritem)
-                    
+         
+        if  self.sequence=='':
+            if self.ui.checkBox_MPPTlightonafter.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)           
         self.loadtoDB('IV',lastmeasDATA,lastmeastrackingDATA) 
         self.launchSequence(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
         

@@ -121,7 +121,7 @@ def prepareCurrent(keithleyObject, NPLC=1, currentlimit=1e-2):
 	'''
 	if keithleyObject == 'Test':
 		return
-	keithleyObject.write('*RST')
+	# keithleyObject.write('*RST')
 	keithleyObject.write('SOUR:FUNC VOLT')
 	keithleyObject.write('SOUR:VOLT:MODE FIXED')
 	keithleyObject.write('SOUR:VOLT:RANG:AUTO ON')
@@ -165,9 +165,9 @@ def openShutter(keithleyObject):
 	if keithleyObject == 'Test':
 		global Iph
 		Iph = 0.0012+np.random.uniform(-0.0005,0.0005)
-		# print('shutter open')
 		return
-	keithleyObject.write('SOUR2:TTL {:d}'.format(0b1111))
+	keithleyObject.write('SOUR2:TTL {:d}'.format(0b0000))
+	print('shutter open')
 
 def closeShutter(keithleyObject):
 	'''
@@ -176,11 +176,11 @@ def closeShutter(keithleyObject):
 	if keithleyObject == 'Test':
 		global Iph
 		Iph = 0
-# 		print('shutter closed')
 		return
-	keithleyObject.write('SOUR2:TTL {:d}'.format(0b0000))
+	keithleyObject.write('SOUR2:TTL {:d}'.format(0b1111))
+	print('shutter closed')
 
-def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=10, forw=1, NPLC = 1, Ilimit=100E-3):
+def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=10, forw=1, polarity='pin', NPLC = 1, Ilimit=100E-3):
 	'''
 	This takes an IV sweep. startV must be less than stopV.
 	Returns an (n,5) numpy array.
@@ -217,7 +217,7 @@ def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=10, forw=1, NPL
 
 	n = round(1 + (stopV - startV) /stepV)
 	keithleyObject.timeout = 100000
-	keithleyObject.write('*RST')
+	# keithleyObject.write('*RST')
 	keithleyObject.write('SOUR:FUNC VOLT')
 	keithleyObject.write('SOUR:VOLT:STAR {:.3f}'.format(startV))
 	keithleyObject.write('SOUR:VOLT:STOP {:.3f}'.format(stopV))
