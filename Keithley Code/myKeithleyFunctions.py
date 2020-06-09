@@ -63,6 +63,7 @@ def connectToKeithley(keithleyAddress='GPIB0::22::INSTR'):
 		keithleyObject.write('*RST')
 		keithleyObject.write('SENS:FUNC:CONC OFF')
 		keithleyObject.write('SYST:RSEN ON')
+		keithleyObject.write('ROUT:TERM REAR')
 	except:
 		print ('Could not establish connection with Keithley.')
 		print ('Check connection with Keithley')
