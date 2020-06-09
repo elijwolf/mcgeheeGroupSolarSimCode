@@ -2209,7 +2209,9 @@ class Window(QtWidgets.QDialog):
         import pyDAQNavi as pDN
         boxCurrent = pDN.DeviceObject('USB-4761,BID#0')
         boxVoltage = pDN.DeviceObject('USB-4761,BID#1')
-        keithleyAddress='GPIB0::22::INSTR'
+        # Depending on which Keithley is connected to the Solar Sim, the address may change.
+        # keithleyAddress='GPIB0::22::INSTR'
+        keithleyAddress='GPIB0::23::INSTR'
 
         self.w = Main()
         self.w.show()
