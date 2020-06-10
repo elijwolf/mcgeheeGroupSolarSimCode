@@ -1093,6 +1093,9 @@ class Main(QtWidgets.QMainWindow):
                 NPLC=10
             if NPLC<0.01:
                 NPLC=0.01
+            polarity='pin'
+            if self.ui.radioButton_nip.isChecked():
+                polarity='nip'
             currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
             prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
             for direction in scandirections:
@@ -1103,7 +1106,7 @@ class Main(QtWidgets.QMainWindow):
                 maxV=self.ui.doubleSpinBox_JVmaxvoltage.value()/1000
                 stepV=self.ui.doubleSpinBox_JVstepsize.value()/1000
                 delay=self.ui.doubleSpinBox_JVdelaypoints.value()
-                data=takeIV(keithleyObject, minV,maxV,stepV,delay,direction,NPLC, currentlimit) 
+                data=takeIV(keithleyObject, minV,maxV,stepV,delay,direction,polarity,NPLC, currentlimit) 
                 currentlist=data[:,1]
                 voltagelist=data[:,0]
                 currentdenlist=[x*1000/pixarea for x in data[:,1]] #assume 1sun, and assume keithley gives Amperes back 
@@ -2128,6 +2131,9 @@ class ThreadtakeIV(QThread):
                 NPLC=10
             if NPLC<0.01:
                 NPLC=0.01
+            polarity='pin'
+            if self.ui.radioButton_nip.isChecked():
+                polarity='nip'
             currentlimit=window.w.ui.doubleSpinBox_JVcurrentlimit.value()
             prepareCurrent(self.keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
             for direction in self.scandirections:
@@ -2136,7 +2142,7 @@ class ThreadtakeIV(QThread):
                 stepV=window.w.ui.doubleSpinBox_JVstepsize.value()/1000
                 delay=window.w.ui.doubleSpinBox_JVdelaypoints.value()
 
-                data=takeIV(self.keithleyObject, minV,maxV,stepV,delay,direction,NPLC, currentlimit)
+                data=takeIV(self.keithleyObject, minV,maxV,stepV,delay,direction,polarity,NPLC, currentlimit)
 
                 if keithleyAddress=='Test':
                     QtTest.QTest.qWait(1000)
