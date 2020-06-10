@@ -62,6 +62,13 @@ sequence builder: so user can define himself the sequence of dark, light, mpp...
 weird empty lines in table
 
 
+NOTES FROM ELI:
+- prepare current should not be called before each IV curve
+    - the relevant commands are built into the IV curve function
+
+- prepare current and prepare voltage are not receiving the device architecture
+    - this shows up with MPPT, Fixed Voltage, and Fixed Current, as well as Measure Intensity
+
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
