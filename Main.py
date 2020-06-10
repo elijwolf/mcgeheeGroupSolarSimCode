@@ -29,7 +29,7 @@ Ui_MainWindow, QMainWindow = loadUiType('GUIfiles\gui.ui')
 from loadingsavingtemplate import LoadParamTemplate, SaveParamTemplate
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'Keithley Code'))
-from myKeithleyFunctions import connectToKeithley, prepareVoltage, measureVoltage, prepareCurrent, measureCurrent, openShutter, closeShutter, takeIV, shutdownKeithley
+from myKeithleyFunctions import connectToKeithley, prepareVoltage, measureVoltage, prepareCurrent, measureCurrent, openShutter, closeShutter, takeIV, shutdownKeithley,setFrontTerminal,setRearTerminal
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'Otherfunctions'))
 from database_Tables import CreateAllTables
@@ -62,10 +62,6 @@ sequence builder: so user can define himself the sequence of dark, light, mpp...
 weird empty lines in table
 
 
-NOTES FROM ELI:
-  File "C:\\Users\\Eli Wolf\\gitKraken\\labCode\\Main.py", line 2135, in run
-    if self.ui.radioButton_nip.isChecked():
-AttributeError: 'ThreadtakeIV' object has no attribute 'ui'
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
@@ -249,12 +245,14 @@ class Main(QtWidgets.QMainWindow):
         # print('measuring ref diode')
         
         self.shutter('OpenShutter',keithleyObject)
+        setFrontTerminal(keithleyObject)
         prepareCurrent(keithleyObject, NPLC = 1)
         dataCurrent = measureCurrent(keithleyObject,voltage=0.0,n=20)
         self.ui.doubleSpinBox_MeasuredDiodeCurrent.setValue(abs(mean(dataCurrent[:,1])))
         Sunintensity=self.ui.doubleSpinBox_DiodeNominalCurrent.value()/abs(mean(dataCurrent[:,1]))
         self.ui.doubleSpinBox_NumbSun.setValue(Sunintensity)
         self.shutter('CloseShutter',keithleyObject)
+        setRearTerminal(keithleyObject)
         RefDiodeChecked=1
     
     def stopmeas(self):
@@ -2134,7 +2132,7 @@ class ThreadtakeIV(QThread):
             if NPLC<0.01:
                 NPLC=0.01
             polarity='pin'
-            if self.ui.radioButton_nip.isChecked():
+            if window.w.radioButton_nip.isChecked():
                 polarity='nip'
             currentlimit=window.w.ui.doubleSpinBox_JVcurrentlimit.value()
             prepareCurrent(self.keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
