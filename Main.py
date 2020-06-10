@@ -250,10 +250,12 @@ class Main(QtWidgets.QMainWindow):
     def MeasureRefDiode(self, keithleyObject):
         global RefDiodeChecked, Sunintensity
         # print('measuring ref diode')
-        
+        polar='pin'
+        if self.ui.radioButton_nip.isChecked():
+            polar='nip'
         self.shutter('OpenShutter',keithleyObject)
         setFrontTerminal(keithleyObject)
-        prepareCurrent(keithleyObject, NPLC = 1)
+        prepareCurrent(keithleyObject, NPLC = 1, currentlimit=1e-2, polarity=polar)
         dataCurrent = measureCurrent(keithleyObject,voltage=0.0,n=20)
         self.ui.doubleSpinBox_MeasuredDiodeCurrent.setValue(abs(mean(dataCurrent[:,1])))
         Sunintensity=self.ui.doubleSpinBox_DiodeNominalCurrent.value()/abs(mean(dataCurrent[:,1]))
@@ -716,11 +718,13 @@ class Main(QtWidgets.QMainWindow):
             os.chdir(directory)
         else :
             os.chdir(directory)
-            
+        polar='pin'
+        if self.ui.radioButton_nip.isChecked():
+            polar='nip'
         if trackingtype=='FixedCurrent':
-            prepareVoltage(keithleyObject, NPLC = 1)#prepare to apply a current and measure a voltage
+            prepareVoltage(keithleyObject, NPLC = 1,voltlimit = 10, polarity=polar)#prepare to apply a current and measure a voltage
         else:
-            prepareCurrent(keithleyObject, NPLC = 1)#prepare to apply a voltage and measure a current
+            prepareCurrent(keithleyObject, NPLC = 1, currentlimit=1e-2, polarity=polar)#prepare to apply a voltage and measure a current
 
         for item in range(len(pixels)):
             STOPMEASMPP=0
@@ -1087,24 +1091,25 @@ class Main(QtWidgets.QMainWindow):
             os.chdir(directory)
         else :
             os.chdir(directory)
+        integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
+        # NPLC of 1 with 60Hz power, new value every 16.67ms
+        # integtime=50ms => NPLC = .050*60 = 3
+        NPLC=integtime*60/1000
+        if NPLC>10:
+            NPLC=10
+        if NPLC<0.01:
+            NPLC=0.01
+        polarity='pin'
+        if self.ui.radioButton_nip.isChecked():
+            polarity='nip'
+        currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
+        prepareCurrent(keithleyObject, NPLC,currentlimit,polarity)#prepare to apply a voltage and measure a current
+
         for item in range(len(pixels)):
             connectPixel(boxCurrent, boxVoltage, pixels[item])
             pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
             pixcolor=pixcolorslist[item]
             
-            integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
-            # NPLC of 1 with 60Hz power, new value every 16.67ms
-            # integtime=50ms => NPLC = .050*60 = 3
-            NPLC=integtime*60/1000
-            if NPLC>10:
-                NPLC=10
-            if NPLC<0.01:
-                NPLC=0.01
-            polarity='pin'
-            if self.ui.radioButton_nip.isChecked():
-                polarity='nip'
-            currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
-            prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
             for direction in scandirections:
                 self.direction=direction
                 if keithleyAddress=='Test':
@@ -1239,23 +1244,26 @@ class Main(QtWidgets.QMainWindow):
             os.chdir(directory)
         else :
             os.chdir(directory)
-            
+        integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
+        # NPLC of 1 with 60Hz power, new value every 16.67ms
+        # integtime=50ms => NPLC = .050*60 = 3
+        NPLC=integtime*60/1000
+        if NPLC>10:
+            NPLC=10
+        if NPLC<0.01:
+            NPLC=0.01
+        currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
+        nMeas=2
+        polarity='pin'
+        if window.w.ui.radioButton_nip.isChecked():
+            polarity='nip'
+        prepareCurrent(keithleyObject, NPLC,currentlimit,polarity)#prepare to apply a voltage and measure a current
+
         for item in range(len(pixels)):
             connectPixel(boxCurrent, boxVoltage, pixels[item])
             pixarea=eval('self.ui.doubleSpinBox_pix'+pixels[item]+'area.value()')
             pixcolor=pixcolorslist[item]
             
-            integtime=self.ui.doubleSpinBox_JVintegrationtime.value()
-            # NPLC of 1 with 60Hz power, new value every 16.67ms
-            # integtime=50ms => NPLC = .050*60 = 3
-            NPLC=integtime*60/1000
-            if NPLC>10:
-                NPLC=10
-            if NPLC<0.01:
-                NPLC=0.01
-            currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
-            nMeas=2
-            prepareCurrent(keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
             # print(scandirections)
             for direction in scandirections:
                 # print(direction)
@@ -2126,23 +2134,23 @@ class ThreadtakeIV(QThread):
         global STOPMEAS, AllDATA, lastmeasDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
         global aftermpp,boxCurrent, boxVoltage, keithleyAddress
         # print('scan')
+        integtime=window.w.ui.doubleSpinBox_JVintegrationtime.value()
+        # NPLC of 1 with 60Hz power, new value every 16.67ms
+        # integtime=50ms => NPLC = .050*60 = 3
+        NPLC=integtime*60/1000
+        if NPLC>10:
+            NPLC=10
+        if NPLC<0.01:
+            NPLC=0.01
+        polarity='pin'
+        if window.w.ui.radioButton_nip.isChecked():
+            polarity='nip'
+        currentlimit=window.w.ui.doubleSpinBox_JVcurrentlimit.value()
+        prepareCurrent(self.keithleyObject, NPLC,currentlimit,polarity)#prepare to apply a voltage and measure a current
 
         for item in range(len(self.pixels)):
             connectPixel(boxCurrent, boxVoltage, self.pixels[item])
             
-            integtime=window.w.ui.doubleSpinBox_JVintegrationtime.value()
-            # NPLC of 1 with 60Hz power, new value every 16.67ms
-            # integtime=50ms => NPLC = .050*60 = 3
-            NPLC=integtime*60/1000
-            if NPLC>10:
-                NPLC=10
-            if NPLC<0.01:
-                NPLC=0.01
-            polarity='pin'
-            if window.w.ui.radioButton_nip.isChecked():
-                polarity='nip'
-            currentlimit=window.w.ui.doubleSpinBox_JVcurrentlimit.value()
-            prepareCurrent(self.keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
             for direction in self.scandirections:
                 minV=window.w.ui.doubleSpinBox_JVminvoltage.value()/1000
                 maxV=window.w.ui.doubleSpinBox_JVmaxvoltage.value()/1000
