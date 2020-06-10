@@ -2132,7 +2132,7 @@ class ThreadtakeIV(QThread):
             if NPLC<0.01:
                 NPLC=0.01
             polarity='pin'
-            if window.w.radioButton_nip.isChecked():
+            if window.w.ui.radioButton_nip.isChecked():
                 polarity='nip'
             currentlimit=window.w.ui.doubleSpinBox_JVcurrentlimit.value()
             prepareCurrent(self.keithleyObject, NPLC,currentlimit)#prepare to apply a voltage and measure a current
