@@ -63,7 +63,9 @@ weird empty lines in table
 
 
 NOTES FROM ELI:
-
+  File "C:\\Users\\Eli Wolf\\gitKraken\\labCode\\Main.py", line 2135, in run
+    if self.ui.radioButton_nip.isChecked():
+AttributeError: 'ThreadtakeIV' object has no attribute 'ui'
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
