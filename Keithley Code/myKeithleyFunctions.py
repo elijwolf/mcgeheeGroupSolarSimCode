@@ -114,6 +114,18 @@ def measureVoltage(keithleyObject, current=0, n=1):
 	data = rawDataArray
 	return data
 
+
+def prepareCurrentRefDiode(keithleyObject, NPLC=1, currentlimit=1e-2):
+	'''
+	Prepares the Keithley to measure current of Ref Diode.
+	NPLC Range [0.01,10]
+	'''
+def measureCurrentRefDiode(keithleyObject, voltage=0, n=1):
+	'''
+	Sets the voltage and measures current n times.
+	'''
+
+
 def prepareCurrent(keithleyObject, NPLC=1, currentlimit=1e-2):
 	'''
 	Prepares the Keithley to measure current.
