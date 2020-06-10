@@ -17,6 +17,7 @@ integtime	10.0
 JVdelaypoints	10.0
 delayshutter	100.0
 scandirection	Reverse
+polarity	pin
 
 startvoltage	500.0
 MPPTstepsize	5

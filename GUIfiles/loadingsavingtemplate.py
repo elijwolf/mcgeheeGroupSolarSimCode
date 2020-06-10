@@ -53,6 +53,13 @@ def LoadParamTemplate(self):
                 index = self.ui.comboBox_JVscandirection.findText(line.split('\t')[1][:-1], QtCore.Qt.MatchFixedString)
                 if index >= 0:
                      self.ui.comboBox_JVscandirection.setCurrentIndex(index)
+            elif 'polarity' in line:
+                if line.split('\t')[1]=='nip':
+                    self.ui.radioButton_nip.setChecked(True)
+                    self.ui.radioButton_pin.setChecked(False)
+                else:
+                    self.ui.radioButton_nip.setChecked(False)
+                    self.ui.radioButton_pin.setChecked(True)
             elif 'startvoltage' in line:
                 self.ui.doubleSpinBox_MPPTstartvoltage.setValue(float(line.split('\t')[1]))
             elif 'MPPTstepsize' in line:
@@ -137,6 +144,10 @@ def SaveParamTemplate(self):
         radioButton_Assume1sun='True'
     else:
         radioButton_Assume1sun='False'
+    if self.ui.radioButton_nip.isChecked():
+        polarity='nip'
+    else:
+        polarity='pin'
         
     directory=os.path.join(str(Path(os.path.abspath(__file__)).parent.parent),'ExamplesTemplateFiles')
     print(str(self.ui.doubleSpinBox_JVdelaypoints.value()))
@@ -161,6 +172,7 @@ def SaveParamTemplate(self):
             'JVdelaypoints\t'+ str(self.ui.doubleSpinBox_JVdelaypoints.value())+'\n'+\
             'delayshutter\t'+ str(self.ui.doubleSpinBox_JVdelayshutter.value())+'\n'+\
             'scandirection\t'+ str(self.ui.comboBox_JVscandirection.currentText())+'\n'+\
+            'polarity\t'+ polarity+'\n'+\
             '\n'+\
             'startvoltage\t'+ str(self.ui.doubleSpinBox_MPPTstartvoltage.value())+'\n'+\
             'MPPTstepsize\t'+ str(self.ui.spinBox_MPPTstepsize.value())+'\n'+\

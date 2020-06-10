@@ -63,11 +63,7 @@ weird empty lines in table
 
 
 NOTES FROM ELI:
-- prepare current should not be called before each IV curve
-    - the relevant commands are built into the IV curve function
 
-- prepare current and prepare voltage are not receiving the device architecture
-    - this shows up with MPPT, Fixed Voltage, and Fixed Current, as well as Measure Intensity
 
 """
 #%%######################################################################################################
@@ -1050,7 +1046,9 @@ class Main(QtWidgets.QMainWindow):
         if aftermpp:
             if 'aftermpp' not in commenttext:
                 commenttext+='_aftermpp'
-        
+        polarity='pin'
+        if self.ui.radioButton_nip.isChecked():
+            polarity='nip'
         AllDATA[sample]={'sampleID': sample,'SampleNamePix': str(self.ui.lineEdit_SampleName.text()) +'_'+ pixels[item], 
                           'linktorawdata':str(os.path.join(str(directory),sample+'.txt')),'SampleName': samplename,'Batch#':Batch,'Substrate#':Substrate, 'Pixel':pixels[item], 'Allpixs':allpixtobemeasured,
                           'ScanDirection': directionstr, 'illum': illum, 'Sunintensity': Sunintensity, 'IsRefDiodeMeasured': RefDiodeChecked, 
@@ -1061,7 +1059,7 @@ class Main(QtWidgets.QMainWindow):
                           'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
                           'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
                           'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
-                          'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
+                          'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),'polarity':polarity,
                           'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
                           'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
                           }
@@ -1188,7 +1186,7 @@ class Main(QtWidgets.QMainWindow):
                                   'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
                                   'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
                                   'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
-                                  'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
+                                  'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),'polarity':polarity,
                                   'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
                                   'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
                                   }
@@ -1415,7 +1413,7 @@ class Main(QtWidgets.QMainWindow):
                                  'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
                                  'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
                                  'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
-                                 'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
+                                 'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),'polarity':polarity,
                                  'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
                                  'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
                                  }
@@ -1619,6 +1617,7 @@ class Main(QtWidgets.QMainWindow):
                 'delaypoints:\t'+str(DATA[sample]['Delaypts'])+'\n'+\
                 'delayshutter:\t'+str(DATA[sample]['DelayShutter'])+'\n'+\
                 'scandirection:\t'+str(DATA[sample]['ScanDirection'])+'\n'+\
+                'polarity:\t'+str(DATA[sample]['polarity'])+'\n'+\
                 '\n'+\
                 '#IV results\n'+\
                 'Eff\t'+str(DATA[sample]['Eff'])+'\n'+\
@@ -2051,7 +2050,9 @@ class Main(QtWidgets.QMainWindow):
             directionstr='rev' 
             self.JVgraph.plot(data[:,0],currentdenlist, linestyle="solid",color=pixcolor) 
         self.fig1.canvas.draw_idle() 
-         
+        polarity='pin'
+        if self.ui.radioButton_nip.isChecked():
+            polarity='nip'
         if shutteropen: 
             illum='lt' 
         else: 
@@ -2109,7 +2110,7 @@ class Main(QtWidgets.QMainWindow):
                          'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
                          'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
                          'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
-                         'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),
+                         'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),'polarity':polarity,
                          'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
                          'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
                          }
