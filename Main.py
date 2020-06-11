@@ -743,17 +743,15 @@ class Main(QtWidgets.QMainWindow):
             
             elapsed_timer = QtCore.QElapsedTimer()
             elapsed_timer.start()
-        
+            if self.ui.checkBox_MPPTlighton.isChecked():
+                self.shutter('OpenShutter',keithleyObject)
+            else:
+                self.shutter('CloseShutter',keithleyObject)
+                
             while True:
                 voltagefixed=self.ui.doubleSpinBox_MPPTstartvoltage.value()
                 delay=self.ui.doubleSpinBox_MPPTdelaypoints.value()
                 step=self.ui.spinBox_MPPTstepsize.value()
-                
-                if self.ui.checkBox_MPPTlighton.isChecked():
-                    self.shutter('OpenShutter',keithleyObject)
-                else:
-                    self.shutter('CloseShutter',keithleyObject)
-                
                 if trackingtype=='FixedVoltage':
                     dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas,polarity = polar)
                     currentden=1000*abs(mean(dataCurrent[:,1]))/pixarea #mA/cm2
@@ -799,10 +797,10 @@ class Main(QtWidgets.QMainWindow):
                     while True:
                         step=self.ui.spinBox_MPPTstepsize.value()
                         delay=self.ui.doubleSpinBox_MPPTdelaypoints.value()
-                        if self.ui.checkBox_MPPTlighton.isChecked():
-                            self.shutter('OpenShutter',keithleyObject)
-                        else:
-                            self.shutter('CloseShutter',keithleyObject)
+                        # if self.ui.checkBox_MPPTlighton.isChecked():
+                        #     self.shutter('OpenShutter',keithleyObject)
+                        # else:
+                        #     self.shutter('CloseShutter',keithleyObject)
                         
                         dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
                         currentden=1000*abs(mean(dataCurrent[:,1]))/pixarea

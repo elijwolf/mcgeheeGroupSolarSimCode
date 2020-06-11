@@ -104,10 +104,12 @@ def closeShutter(keithleyObject):
 	print('shutter closed')
 
 def setFrontTerminal(keithleyObject):
-	keithleyObject.write('ROUT:TERM FRON')
+	if keithleyObject != 'Test':
+		keithleyObject.write('ROUT:TERM FRON')
 
 def setRearTerminal(keithleyObject):
-	keithleyObject.write('ROUT:TERM REAR')
+	if keithleyObject != 'Test':
+		keithleyObject.write('ROUT:TERM REAR')
 
 def prepareVoltage(keithleyObject, NPLC=1, voltlimit = 10, polarity='pin'):
 	'''
@@ -170,7 +172,8 @@ def prepareCurrent(keithleyObject, NPLC=1, currentlimit=1e-2, polarity='pin'):
 	Prepares the Keithley to measure current.
 	NPLC Range [0.01,10]
 	'''
-	print (polarity)
+	print("fromkeithley prep")
+	print(polarity)
 	if polarity == 'pin':
 		currentlimit *= -1
 
@@ -191,6 +194,7 @@ def measureCurrent(keithleyObject, voltage=0, n=1, polarity='pin'):
 	'''
 	Sets the voltage and measures current n times.
 	'''
+	print("fromkeithley meas")
 	print (polarity)
 	if polarity == 'pin':
 		voltage *= -1
@@ -233,7 +237,7 @@ def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=10, forw=1, pol
 	NPLC Range [0.01,10]
 	'''
 	delay = delay/1000 # convert delay from ms to seconds
-
+	print("fromkeithley meas: ",polarity)
 	if polarity =='pin':
 		minV, maxV = -maxV, -minV
 		forw = not forw
