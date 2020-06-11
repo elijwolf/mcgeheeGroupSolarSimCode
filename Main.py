@@ -802,7 +802,7 @@ class Main(QtWidgets.QMainWindow):
                         # else:
                         #     self.shutter('CloseShutter',keithleyObject)
                         
-                        dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
+                        dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas,polarity = polar)
                         currentden=1000*abs(mean(dataCurrent[:,1]))/pixarea
                         current=abs(mean(dataCurrent[:,1]))
                         
@@ -1412,7 +1412,7 @@ class Main(QtWidgets.QMainWindow):
                                  'MinVoltage': self.ui.doubleSpinBox_JVminvoltage.value(), 'MaxVoltage': self.ui.doubleSpinBox_JVmaxvoltage.value(),
                                  'Aftermpp':aftermpp,'StepSize': self.ui.doubleSpinBox_JVstepsize.value(), 'CurrentLimit': self.ui.doubleSpinBox_JVcurrentlimit.value(), 
                                  'IntegTime': self.ui.doubleSpinBox_JVintegrationtime.value(), 'Delaypts': self.ui.doubleSpinBox_JVdelaypoints.value(), 
-                                 'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),'polarity':polarity,
+                                 'DelayShutter': self.ui.doubleSpinBox_JVdelayshutter.value(),'polarity':polar,
                                  'Voc': -1., 'Jsc': -1., 'Isc': -1., 'FF': -1., 'Eff': -1, 'Pmpp': -1., 'Roc':-1., 'Rsc':-1., 'Jmpp':-1, 'Vmpp':-1,
                                  'Voltage':voltagelist,'Current':currentlist, 'CurrentDensity': currentdenlist
                                  }
