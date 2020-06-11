@@ -36,15 +36,15 @@ def connectToKeithley(keithleyAddress='GPIB0::22::INSTR'):
 		global Iph
 		Iph = 0
 		global q
-		q = 1.602e-19   
+		q = 1.602e-19
 
 		def testIV(V,Iph,I0=1e-13,T=25,VF=1.1,VR=1,V0=0.56):
 # 			I = -Iph + I0*(np.exp((V-VF+V0)/(k*(T+T0)))-1) + 0.01*np.random.uniform(-1,1)
-			I = -Iph + I0*(np.exp(q*(V-VF+V0)/(k*(T+T0)))-1) + 0.001*np.random.uniform(-0.0005,0.0005)
+			I = -Iph + I0*(np.exp(q*(V-VF+V0)/(k*(T+T0)))-1) + np.random.uniform(-.0001,.0001)
 			return I
 
 		def testIVinv(I,Iph,I0=1e-13,T=25,VF=1.1,VR=1,V0=0.56):
-			V = k*(T+T0)*np.log(1+((I+Iph)/I0))/q + 0.001*np.random.uniform(-1,1)
+			V = k*(T+T0)*np.log(1+((I+Iph)/I0))/q + np.random.uniform(-.001,.001)
 			return V
 
 		global getI
@@ -87,7 +87,10 @@ def openShutter(keithleyObject):
 	'''
 	if keithleyObject == 'Test':
 		global Iph
-		Iph = 0.0012+np.random.uniform(-0.0005,0.0005)
+		activeArea = 0.06 #cm^2
+		simulatedJsc = 20 #mA/cm^2
+		photoCurrent = simulatedJsc*activeArea/1000 + np.random.uniform(-.010,.01)
+		Iph = photoCurrent #Units are Amps
 		return
 	keithleyObject.write('SOUR2:TTL {:d}'.format(0b0000))
 	print('shutter open')
@@ -301,12 +304,15 @@ if __name__ == "__main__":
 	# rm = pyvisa.ResourceManager()
 	# print(rm.list_resources())
 
-	keithley = connectToKeithley('GPIB0::22::INSTR')
+	# keithley = connectToKeithley('GPIB0::22::INSTR')
+	keithley = connectToKeithley('Test')
 	polarity = 'nip'
 	forw = 0
 	# keithley = connectToKeithley('Test')
 	
-# 	openShutter(keithley)
+	rawDataDark = takeIV(keithley, stepV = 0.01, forw=forw, polarity=polarity)
+
+	openShutter(keithley)
 # 	closeShutter(keithley)
 
 	# prepareCurrent(keithley, NPLC = 0.01, polarity=polarity)
@@ -320,7 +326,9 @@ if __name__ == "__main__":
 
 
 
-	rawData = takeIV(keithley, forw=forw, polarity=polarity)
+	rawDataLight = takeIV(keithley, stepV = 0.01, forw=forw, polarity=polarity)
+
+	closeShutter(keithley)
 
 
 
@@ -334,9 +342,14 @@ if __name__ == "__main__":
 	# print (dataVoltage[0,:])
 
 	shutdownKeithley(keithley)
-	plt.plot(rawData[:,0],rawData[:,1])
-	plt.scatter(rawData[0,0],rawData[0,1], label = 'start')
-	plt.scatter(rawData[-1,0],rawData[-1,1], label = 'end')
+	plt.axhline(color = 'k')
+	plt.axvline(color = 'k')
+	plt.plot(rawDataLight[:,0],rawDataLight[:,1], color = 'r')
+	plt.scatter(rawDataLight[0,0],rawDataLight[0,1], label = 'start', color = 'y')
+	plt.scatter(rawDataLight[-1,0],rawDataLight[-1,1], label = 'end', color = 'g')
+	plt.plot(rawDataDark[:,0],rawDataDark[:,1], color = 'b')
+	plt.scatter(rawDataDark[0,0],rawDataDark[0,1], label = 'start', color = 'cyan')
+	plt.scatter(rawDataDark[-1,0],rawDataDark[-1,1], label = 'end', color = 'purple')
 	plt.legend()
 
 	plt.show()
