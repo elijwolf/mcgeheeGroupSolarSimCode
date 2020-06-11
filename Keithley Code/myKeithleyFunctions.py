@@ -8,6 +8,8 @@ from PyQt5 import QtTest
 - find out if you can use wait_for_srq or wai*
 - determine Digital Output configuration required to open and close the shutter. The functions currently work, but the output configuration is a guess.
 - consider changing TRIG:COUN for repeated measurements instead of repeating the command
+
+
 '''
 ###############
 def connectToKeithley(keithleyAddress='GPIB0::22::INSTR'):
@@ -112,6 +114,7 @@ def prepareVoltage(keithleyObject, NPLC=1, voltlimit = 10, polarity='pin'):
 	Prepares the Keithley to measure voltage.
 	NPLC Range [0.01,10]
 	'''
+	print (polarity)
 	if polarity == 'pin':
 		voltlimit *= -1
 	if keithleyObject == 'Test':
@@ -131,6 +134,7 @@ def measureVoltage(keithleyObject, current=0, n=1, polarity='pin'):
 	'''
 	Sets the current and measures voltage n times.
 	'''
+	print (polarity)
 	if polarity == 'pin':
 		current *= -1
 
@@ -166,6 +170,7 @@ def prepareCurrent(keithleyObject, NPLC=1, currentlimit=1e-2, polarity='pin'):
 	Prepares the Keithley to measure current.
 	NPLC Range [0.01,10]
 	'''
+	print (polarity)
 	if polarity == 'pin':
 		currentlimit *= -1
 
@@ -186,6 +191,7 @@ def measureCurrent(keithleyObject, voltage=0, n=1, polarity='pin'):
 	'''
 	Sets the voltage and measures current n times.
 	'''
+	print (polarity)
 	if polarity == 'pin':
 		voltage *= -1
 

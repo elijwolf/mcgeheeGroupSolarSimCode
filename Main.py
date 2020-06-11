@@ -64,7 +64,7 @@ weird empty lines in table
 
 NOTES FROM ELI:
 
-
+- when doing mppt, openshutter is called at every point
 """
 #%%######################################################################################################
 class Main(QtWidgets.QMainWindow):
@@ -249,12 +249,13 @@ class Main(QtWidgets.QMainWindow):
         polar='pin'
         if self.ui.radioButton_nip.isChecked():
             polar='nip'
+        print(polar)
         self.shutter('OpenShutter',keithleyObject)
         setFrontTerminal(keithleyObject)
         prepareCurrent(keithleyObject, NPLC = 1, currentlimit=1e-2, polarity=polar)
-        dataCurrent = measureCurrent(keithleyObject,voltage=0.0,n=20)
+        dataCurrent = measureCurrent(keithleyObject,voltage=0.0,n=20, polarity = polar)
         self.ui.doubleSpinBox_MeasuredDiodeCurrent.setValue(abs(mean(dataCurrent[:,1])))
-        Sunintensity=self.ui.doubleSpinBox_DiodeNominalCurrent.value()/abs(mean(dataCurrent[:,1]))
+        Sunintensity=abs(mean(dataCurrent[:,1]))/self.ui.doubleSpinBox_DiodeNominalCurrent.value()
         self.ui.doubleSpinBox_NumbSun.setValue(Sunintensity)
         self.shutter('CloseShutter',keithleyObject)
         setRearTerminal(keithleyObject)
@@ -754,7 +755,7 @@ class Main(QtWidgets.QMainWindow):
                     self.shutter('CloseShutter',keithleyObject)
                 
                 if trackingtype=='FixedVoltage':
-                    dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
+                    dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas,polarity = polar)
                     currentden=1000*abs(mean(dataCurrent[:,1]))/pixarea #mA/cm2
                     current=abs(mean(dataCurrent[:,1])) #A
                     currentlist.append(float(current))
@@ -766,7 +767,7 @@ class Main(QtWidgets.QMainWindow):
                     delaylist.append(delay)  
                     
                 elif trackingtype=='FixedCurrent':
-                    dataVoltage=measureVoltage(keithleyObject,voltagefixed/1000,nMeas)
+                    dataVoltage=measureVoltage(keithleyObject,voltagefixed/1000,nMeas,polarity = polar)
                     voltage=abs(mean(dataVoltage[:,1]))
                     currentlist.append(voltagefixed)
                     currentdensitylist.append(voltagefixed/pixarea)
@@ -781,7 +782,7 @@ class Main(QtWidgets.QMainWindow):
                         voltagefixed=sorted(lastmeasDATA.items(), key=lambda x: x[1]['Eff'],reverse=True)[0][1]['Vmpp']
                         # print(voltagefixed)
                         
-                    dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas)
+                    dataCurrent=measureCurrent(keithleyObject,voltagefixed/1000,nMeas,polarity = polar)
                     currentden=abs(mean(dataCurrent[:,1]))/pixarea
                     current=abs(mean(dataCurrent[:,1]))
                     
@@ -1252,10 +1253,10 @@ class Main(QtWidgets.QMainWindow):
             NPLC=0.01
         currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
         nMeas=2
-        polarity='pin'
+        polar='pin'
         if window.w.ui.radioButton_nip.isChecked():
-            polarity='nip'
-        prepareCurrent(keithleyObject, NPLC,currentlimit,polarity)#prepare to apply a voltage and measure a current
+            polar='nip'
+        prepareCurrent(keithleyObject, NPLC,currentlimit,polar)#prepare to apply a voltage and measure a current
 
         for item in range(len(pixels)):
             connectPixel(boxCurrent, boxVoltage, pixels[item])
@@ -1357,7 +1358,7 @@ class Main(QtWidgets.QMainWindow):
                 # startIVtime=datetime.datetime.now()
                 for step in volts:
                     starttime=datetime.datetime.now()
-                    dataCurrent=measureCurrent(keithleyObject,step,nMeas)
+                    dataCurrent=measureCurrent(keithleyObject,step,nMeas,polarity = polar)
                     currentdenlist.append(1000*mean(dataCurrent[:,1])/pixarea)
                     currentlist.append(mean(dataCurrent[:,1]))
                     voltagelist.append(step)
