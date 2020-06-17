@@ -143,6 +143,8 @@ class Main(QtWidgets.QMainWindow):
         
         self.ui.pushButton_cleargraph.clicked.connect(lambda: self.ClearGraph(0))
         
+        self.ui.pushButton_stoptracking.clicked.connect(self.stopmeasmpp)
+        self.ui.pushButton_StopSequ.clicked.connect(self.stopmeas)
         self.ui.pushButton_StopMeas.clicked.connect(self.stopmeas)
         self.ui.pushButton_StopMppt.clicked.connect(self.stopmeasmpp)
         
@@ -164,7 +166,7 @@ class Main(QtWidgets.QMainWindow):
         self.ui.pushButton_DBTime_Add.clicked.connect(self.Addrestriction)
         self.ui.pushButton_DBTime_remove.clicked.connect(self.Removerestriction)
         
-        
+        self.ui.pushButton_PersoSequence.clicked.connect(lambda: self.LoadStartPersoSequence(self.keithleyObject))
         
     def closeEvent(self, event):
         """ what happens when close the program"""
@@ -303,6 +305,120 @@ class Main(QtWidgets.QMainWindow):
             print('not threaded')
             self.StartMeas(self.keithleyObject)
             
+    def LoadStartPersoSequence(self, keithleyObject):
+        global STOPMEAS, STOPMEASMPP,Sunintensity
+        #ask user to choose file
+        directory=os.path.join(str(Path(os.path.abspath(__file__))),'ExamplesTemplateFiles')
+        fname = QFileDialog.getOpenFileName(self, 'Choose a Sequence file to load', directory,"Text files (*.txt)")
+        # print(fname)
+        #ask user where to save data
+        # folderName=QFileDialog.getExistingDirectory(self, 'Select directory')
+        # os.chdir(folderName)
+        
+        #open and read file
+        filetoread = open(fname[0],"r", encoding='ISO-8859-1')
+        filerawdata = filetoread.readlines()
+        
+        #execute the sequence
+        Assume1suncheck=0
+        if not self.ui.radioButton_Assume1sun.isChecked() and not RefDiodeChecked:
+            Assume1suncheck=self.Popup_CheckDiode()
+        go=0
+        
+        if Assume1suncheck =='User ignores request for ref meas' or self.ui.radioButton_Assume1sun.isChecked():
+            Sunintensity=1
+            go=1
+        if go or RefDiodeChecked:
+            if RefDiodeChecked and not self.ui.radioButton_Assume1sun.isChecked():
+                Sunintensity=self.ui.doubleSpinBox_NumbSun.value()
+
+        stepnumb=1
+        Rep=0
+        pixcolorslist=['black']
+        for row in filerawdata:
+            if STOPMEAS==1:
+                break
+            
+            self.ui.spinBox_SequStepNumb.setValue(stepnumb)
+            stepnumb+=1
+            
+            if row.split('\t')[0] =='JVscan':
+                print('JVscan')
+                self.ui.lineEdit_SequMeasNow.setText('JVscan')
+                # QtTest.QTest.qWait(1000)
+                pixels=[row.split('\t')[9]]
+                if row.split('\t')[1]>row.split('\t')[2]:
+                    scandirections=[0]
+                    self.ui.doubleSpinBox_JVminvoltage.setValue(1000*float(row.split('\t')[2]))
+                    self.ui.doubleSpinBox_JVmaxvoltage.setValue(1000*float(row.split('\t')[1]))
+                else:
+                    scandirections=[1]
+                    self.ui.doubleSpinBox_JVminvoltage.setValue(1000*float(row.split('\t')[1]))
+                    self.ui.doubleSpinBox_JVmaxvoltage.setValue(1000*float(row.split('\t')[2]))
+                self.ui.doubleSpinBox_JVstepsize.setValue(1000*float(row.split('\t')[3]))
+                self.ui.doubleSpinBox_JVcurrentlimit.setValue(float(row.split('\t')[4]))
+                self.ui.doubleSpinBox_JVintegrationtime.setValue(1000*float(row.split('\t')[5]))
+                self.ui.doubleSpinBox_JVdelaypoints.setValue(1000*float(row.split('\t')[6]))
+                self.ui.doubleSpinBox_JVdelayshutter.setValue(float(row.split('\t')[7]))
+                if row.split('\t')[8]=='ON':
+                    self.shutter('OpenShutter',keithleyObject)
+                    self.ui.checkBox_MPPTlighton.setChecked(True)
+                else:
+                    self.shutter('CloseShutter',keithleyObject)
+                    self.ui.checkBox_MPPTlighton.setChecked(False)
+                # print(row.split('\t')[10])
+                if row.split('\t')[10]=='pin\n':
+                    # print('true')
+                    self.ui.radioButton_pin.setChecked(True)
+                    self.ui.radioButton_nip.setChecked(False)
+                else:
+                    self.ui.radioButton_pin.setChecked(False)
+                    self.ui.radioButton_nip.setChecked(True)
+                
+                self.PlotIV(keithleyObject, pixels, pixcolorslist, scandirections, Rep)
+
+            else:
+                # QtTest.QTest.qWait(1000)
+                pixels=[row.split('\t')[7]]
+                
+                self.ui.doubleSpinBox_MPPTstartvoltage.setValue(1000*float(row.split('\t')[1]))
+                self.ui.spinBox_MPPTstepsize.setValue(1000*float(row.split('\t')[2]))
+                self.ui.doubleSpinBox_MPPTvoltagelimit.setValue(1000*float(row.split('\t')[3]))
+                self.ui.doubleSpinBox_MPPTdelaypoints.setValue(1000*float(row.split('\t')[4]))
+                duration= float(row.split('\t')[5])
+                if row.split('\t')[6]=='ON':
+                    self.shutter('OpenShutter',keithleyObject)
+                    self.ui.checkBox_MPPTlighton.setChecked(True)
+                else:
+                    self.shutter('CloseShutter',keithleyObject)
+                    self.ui.checkBox_MPPTlighton.setChecked(False)
+                if row.split('\t')[8]=='pin\n':
+                    # print('true')
+                    self.ui.radioButton_pin.setChecked(True)
+                    self.ui.radioButton_nip.setChecked(False)
+                else:
+                    self.ui.radioButton_pin.setChecked(False)
+                    self.ui.radioButton_nip.setChecked(True)
+                    
+                if row.split('\t')[0] =='MPPT':
+                    print('MPPT')
+                    self.ui.lineEdit_SequMeasNow.setText('MPPT')
+                    self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, Rep,duration)
+
+                elif row.split('\t')[0] =='FixedCurrent':
+                    print('FixedCurrent')
+                    self.ui.lineEdit_SequMeasNow.setText('FixedCurrent')
+                    QtTest.QTest.qWait(1000)
+                    self.Tracking(keithleyObject,'FixedCurrent', pixels, pixcolorslist, Rep,duration)
+
+                elif row.split('\t')[0] =='FixedVoltage':
+                    print('FixedVoltage')
+                    self.ui.lineEdit_SequMeasNow.setText('FixedVoltage')
+                    QtTest.QTest.qWait(1000)
+                    self.Tracking(keithleyObject,'FixedVoltage', pixels, pixcolorslist, Rep,duration)
+        
+        QMessageBox.information(self,'Finished', 'The sequence is finished.')
+            
     def StartMeasThreaded(self, keithleyObject):
         global aftermpp,boxCurrent, boxVoltage, RefDiodeChecked, STOPMEAS, shutteropen,lastmeastrackingDATA, lastmeasDATA, Sunintensity
         # print('startmeas')
@@ -391,7 +507,7 @@ class Main(QtWidgets.QMainWindow):
             else:
                 self.shutter('CloseShutter',keithleyObject)
                 
-            self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, scandirections, Rep)
+            self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, Rep,-1)
             
             if self.ui.checkBox_MPPTlightonafter.isChecked():
                 self.shutter('OpenShutter',keithleyObject)
@@ -407,7 +523,7 @@ class Main(QtWidgets.QMainWindow):
             else:
                 self.shutter('CloseShutter',keithleyObject)
             
-            self.Tracking(keithleyObject,'FixedVoltage', pixels, pixcolorslist, scandirections, Rep)
+            self.Tracking(keithleyObject,'FixedVoltage', pixels, pixcolorslist, Rep,-1)
             
             if self.ui.checkBox_MPPTlightonafter.isChecked():
                 self.shutter('OpenShutter',keithleyObject)
@@ -422,7 +538,7 @@ class Main(QtWidgets.QMainWindow):
             else:
                 self.shutter('CloseShutter',keithleyObject)
                 
-            self.Tracking(keithleyObject,'FixedCurrent', pixels, pixcolorslist, scandirections, Rep)
+            self.Tracking(keithleyObject,'FixedCurrent', pixels, pixcolorslist, Rep,-1)
             
             if self.ui.checkBox_MPPTlightonafter.isChecked():
                 self.shutter('OpenShutter',keithleyObject)
@@ -436,7 +552,7 @@ class Main(QtWidgets.QMainWindow):
                 self.shutter('OpenShutter',keithleyObject)
             else:
                 self.shutter('CloseShutter',keithleyObject)
-            self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, scandirections, Rep)
+            self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, Rep,-1)
             
             if self.ui.checkBox_MPPTlightonafter.isChecked():
                 self.shutter('OpenShutter',keithleyObject)
@@ -530,7 +646,7 @@ class Main(QtWidgets.QMainWindow):
                     else:
                         self.shutter('CloseShutter',keithleyObject)
                         
-                    self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, scandirections, i)
+                    self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, i,-1)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
                         self.shutter('OpenShutter',keithleyObject)
@@ -544,7 +660,7 @@ class Main(QtWidgets.QMainWindow):
                     else:
                         self.shutter('CloseShutter',keithleyObject)
                     
-                    self.Tracking(keithleyObject,'FixedVoltage', pixels, pixcolorslist, scandirections, i)
+                    self.Tracking(keithleyObject,'FixedVoltage', pixels, pixcolorslist, i,-1)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
                         self.shutter('OpenShutter',keithleyObject)
@@ -558,7 +674,7 @@ class Main(QtWidgets.QMainWindow):
                     else:
                         self.shutter('CloseShutter',keithleyObject)
                         
-                    self.Tracking(keithleyObject,'FixedCurrent', pixels, pixcolorslist, scandirections, i)
+                    self.Tracking(keithleyObject,'FixedCurrent', pixels, pixcolorslist, i,-1)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
                         self.shutter('OpenShutter',keithleyObject)
@@ -577,7 +693,7 @@ class Main(QtWidgets.QMainWindow):
                     else:
                         self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0    
-                    self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, scandirections, i)
+                    self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, i,-1)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
                         self.shutter('OpenShutter',keithleyObject)
@@ -602,7 +718,7 @@ class Main(QtWidgets.QMainWindow):
                     else:
                         self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0    
-                    self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, scandirections, i)
+                    self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, i,-1)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
                         self.shutter('OpenShutter',keithleyObject)
@@ -635,7 +751,7 @@ class Main(QtWidgets.QMainWindow):
                     else:
                         self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0    
-                    self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, scandirections, i)
+                    self.Tracking(keithleyObject,'MPPT', pixels, pixcolorslist, i,-1)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
                         self.shutter('OpenShutter',keithleyObject)
@@ -667,7 +783,7 @@ class Main(QtWidgets.QMainWindow):
                     else:
                         self.shutter('CloseShutter',keithleyObject)
                     STOPMEAS=0    
-                    self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, scandirections, i)
+                    self.Tracking(keithleyObject,'MPPTbest', pixels, pixcolorslist, i,-1)
                     
                     if self.ui.checkBox_MPPTlightonafter.isChecked():
                         self.shutter('OpenShutter',keithleyObject)
@@ -692,7 +808,7 @@ class Main(QtWidgets.QMainWindow):
         self.ui.pushButton_StartMeas.setEnabled(True)
     
      
-    def Tracking(self, keithleyObject,trackingtype, pixelslist, pixcolorslist, scandirections, Rep):
+    def Tracking(self, keithleyObject,trackingtype, pixelslist, pixcolorslist, Rep,duration):
         global STOPMEAS,STOPMEASMPP, AlltrackingDATA,lastmeastrackingDATA, RefDiodeChecked, Sunintensity, shutteropen
         global boxCurrent, boxVoltage, keithleyAddress, lastmeasDATA
         allpixtobemeasured=''
@@ -762,7 +878,10 @@ class Main(QtWidgets.QMainWindow):
                     powerlist.append(float(currentden*voltagefixed/1000)/Sunintensity)
                     timelist.append(float(elapsed_timer.elapsed()/1000))
                     steplist.append(step)
-                    delaylist.append(delay)  
+                    delaylist.append(delay)
+                    if duration !=-1:
+                        if float(elapsed_timer.elapsed()/1000)>duration:
+                            STOPMEASMPP=1
                     
                 elif trackingtype=='FixedCurrent':
                     dataVoltage=measureVoltage(keithleyObject,voltagefixed/1000,nMeas,polarity = polar)
@@ -773,7 +892,10 @@ class Main(QtWidgets.QMainWindow):
                     powerlist.append(voltage*voltagefixed/pixarea/Sunintensity)
                     timelist.append(float(elapsed_timer.elapsed()/1000))
                     steplist.append(step)
-                    delaylist.append(delay)  
+                    delaylist.append(delay)
+                    if duration !=-1:
+                        if float(elapsed_timer.elapsed()/1000)>duration:
+                            STOPMEASMPP=1
                 
                 elif trackingtype=='MPPT' or trackingtype=='MPPTbest':
                     if trackingtype=='MPPTbest':
@@ -841,10 +963,14 @@ class Main(QtWidgets.QMainWindow):
                                     voltagefixed+=step
                         
                         QtTest.QTest.qWait(delay)
+                        if duration !=-1:
+                            if float(elapsed_timer.elapsed()/1000)>float(duration):
+                                STOPMEASMPP=1
                         if STOPMEASMPP==1:#stops ongoing meas of pixel to pass to the next pixel
                             break
                         if STOPMEAS==1:#will stop all measurement and pass to the next step of sequence
                             break
+
                     
                                  
                     
@@ -1099,6 +1225,7 @@ class Main(QtWidgets.QMainWindow):
         polarity='pin'
         if self.ui.radioButton_nip.isChecked():
             polarity='nip'
+        # print(polarity)
         currentlimit=self.ui.doubleSpinBox_JVcurrentlimit.value()
         prepareCurrent(keithleyObject, NPLC,currentlimit,polarity)#prepare to apply a voltage and measure a current
 
