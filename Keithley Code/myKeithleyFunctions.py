@@ -129,9 +129,9 @@ def prepareVoltage(keithleyObject, NPLC=1, voltlimit = 10, polarity='pin'):
 	keithleyObject.write('SOUR:CURR:MODE FIXED')
 	keithleyObject.write('SOUR:CURR:RANG:AUTO ON')
 	keithleyObject.write('SENS:FUNC "VOLT"')
-	keithleyObject.write('SENS:VOLT:PROT {:.3f}'.format(voltlimit))
+	keithleyObject.write('SENS:VOLT:PROT {:.12f}'.format(voltlimit))
 	keithleyObject.write('SENS:VOLT:RANG:AUTO ON')
-	keithleyObject.write('SENS:VOLT:NPLC {:.3f}'.format(NPLC))
+	keithleyObject.write('SENS:VOLT:NPLC {:.12f}'.format(NPLC))
 	keithleyObject.write('TRIG:COUN 1')
 	keithleyObject.write('OUTP ON')
 
@@ -159,7 +159,7 @@ def measureVoltage(keithleyObject, current=0, n=1, polarity='pin'):
 		if polarity == 'pin':
 			data[:,0:2] *= -1
 		return data
-	keithleyObject.write('SOUR:CURR:LEV {:.3f}'.format(current))
+	keithleyObject.write('SOUR:CURR:LEV {:.12f}'.format(current))
 	rawData = keithleyObject.query_ascii_values('READ?')
 	rawDataArray = np.array(rawData)
 	for i in range(n-1):
@@ -187,9 +187,9 @@ def prepareCurrent(keithleyObject, NPLC=1, currentlimit=1e-2, polarity='pin'):
 	keithleyObject.write('SOUR:VOLT:MODE FIXED')
 	keithleyObject.write('SOUR:VOLT:RANG:AUTO ON')
 	keithleyObject.write('SENS:FUNC "CURR"')
-	keithleyObject.write('SENS:CURR:PROT {:.3f}'.format(currentlimit))
+	keithleyObject.write('SENS:CURR:PROT {:.12f}'.format(currentlimit))
 	keithleyObject.write('SENS:CURR:RANG:AUTO ON')
-	keithleyObject.write('SENS:CURR:NPLC {:.3f}'.format(NPLC))
+	keithleyObject.write('SENS:CURR:NPLC {:.12f}'.format(NPLC))
 	keithleyObject.write('TRIG:COUN 1')
 	keithleyObject.write('OUTP ON')
 
@@ -218,7 +218,7 @@ def measureCurrent(keithleyObject, voltage=0, n=1, polarity='pin'):
 		if polarity == 'pin':
 			data[:,0:2] *= -1
 		return data
-	keithleyObject.write('SOUR:VOLT:LEV {:.3f}'.format(voltage))
+	keithleyObject.write('SOUR:VOLT:LEV {:.12f}'.format(voltage))
 	rawData = keithleyObject.query_ascii_values('READ?')
 	rawDataArray = np.array(rawData)
 	for i in range(n-1):
@@ -276,17 +276,17 @@ def takeIV(keithleyObject, minV=-0.2, maxV=1.2, stepV=0.1, delay=10, forw=1, pol
 	# keithleyObject.write('*RST')
 	keithleyObject.write('SOUR:FUNC VOLT')
 
-	keithleyObject.write('SOUR:VOLT:STAR {:.3f}'.format(startV))
-	keithleyObject.write('SOUR:VOLT:STOP {:.3f}'.format(stopV))
-	keithleyObject.write('SOUR:VOLT:STEP {:.3f}'.format(stepV))
+	keithleyObject.write('SOUR:VOLT:STAR {:.12f}'.format(startV))
+	keithleyObject.write('SOUR:VOLT:STOP {:.12f}'.format(stopV))
+	keithleyObject.write('SOUR:VOLT:STEP {:.12f}'.format(stepV))
 	keithleyObject.write('SOUR:VOLT:MODE SWE')
 	keithleyObject.write('SOUR:SWE:RANG AUTO')
 	keithleyObject.write('SOUR:SWE:SPAC LIN')
 	keithleyObject.write('SOUR:SWE:POIN {:d}'.format(n))
-	keithleyObject.write('SOUR:DEL {:.3f}'.format(delay))
+	keithleyObject.write('SOUR:DEL {:.12f}'.format(delay))
 	keithleyObject.write('SENS:FUNC "CURR"')
-	keithleyObject.write('SENS:CURR:PROT {:.3f}'.format(Ilimit))
-	keithleyObject.write('SENS:CURR:NPLC {:.3f}'.format(NPLC))
+	keithleyObject.write('SENS:CURR:PROT {:.12f}'.format(Ilimit))
+	keithleyObject.write('SENS:CURR:NPLC {:.12f}'.format(NPLC))
 	keithleyObject.write('TRIG:COUN {:d}'.format(n))
 	keithleyObject.write('SYST:TIME:RES')
 	keithleyObject.write('OUTP ON')
@@ -304,31 +304,31 @@ if __name__ == "__main__":
 	# rm = pyvisa.ResourceManager()
 	# print(rm.list_resources())
 
-	# keithley = connectToKeithley('GPIB0::22::INSTR')
-	keithley = connectToKeithley('Test')
+	keithley = connectToKeithley('GPIB0::22::INSTR')
+	# keithley = connectToKeithley('Test')
 	polarity = 'nip'
 	forw = 0
 	# keithley = connectToKeithley('Test')
 	
-	rawDataDark = takeIV(keithley, stepV = 0.01, forw=forw, polarity=polarity)
+	# rawDataDark = takeIV(keithley, stepV = 0.01, forw=forw, polarity=polarity)
 
-	openShutter(keithley)
+	# openShutter(keithley)
 # 	closeShutter(keithley)
 
-	# prepareCurrent(keithley, NPLC = 0.01, polarity=polarity)
-	# dataCurrent = measureCurrent(keithley,voltage=0.2,n=10, polarity=polarity)
-	# print (dataCurrent[0,:])
+	prepareCurrent(keithley, NPLC = 0.01, polarity=polarity)
+	dataCurrent = measureCurrent(keithley,voltage=0.00001,n=10, polarity=polarity)
+	print (dataCurrent[0,:])
 
-	# prepareVoltage(keithley, NPLC = 0.01, polarity=polarity)
-	# dataVoltage = measureVoltage(keithley, current=0.01, n=10, polarity=polarity)
-	# print (dataVoltage[0,:])
+	prepareVoltage(keithley, NPLC = 0.01, polarity=polarity)
+	dataVoltage = measureVoltage(keithley, current=0.0000000001, n=10, polarity=polarity)
+	print (dataVoltage[0,:])
 
 
 
 
 	rawDataLight = takeIV(keithley, stepV = 0.01, forw=forw, polarity=polarity)
 
-	closeShutter(keithley)
+	# closeShutter(keithley)
 
 
 
@@ -347,9 +347,9 @@ if __name__ == "__main__":
 	plt.plot(rawDataLight[:,0],rawDataLight[:,1], color = 'r')
 	plt.scatter(rawDataLight[0,0],rawDataLight[0,1], label = 'start', color = 'y')
 	plt.scatter(rawDataLight[-1,0],rawDataLight[-1,1], label = 'end', color = 'g')
-	plt.plot(rawDataDark[:,0],rawDataDark[:,1], color = 'b')
-	plt.scatter(rawDataDark[0,0],rawDataDark[0,1], label = 'start', color = 'cyan')
-	plt.scatter(rawDataDark[-1,0],rawDataDark[-1,1], label = 'end', color = 'purple')
+	# plt.plot(rawDataDark[:,0],rawDataDark[:,1], color = 'b')
+	# plt.scatter(rawDataDark[0,0],rawDataDark[0,1], label = 'start', color = 'cyan')
+	# plt.scatter(rawDataDark[-1,0],rawDataDark[-1,1], label = 'end', color = 'purple')
 	plt.legend()
 
 	plt.show()
